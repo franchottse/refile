@@ -2,7 +2,8 @@ import csv
 import pandas as pd
 import openpyxl
 from openpyxl import load_workbook
-from openpyxl.utils.exceptions import *
+from openpyxl.utils.exceptions import ReadOnlyWorkbookException
+# from openpyxl.utils.exceptions import *
 
 
 def printCell(sheet):
@@ -40,7 +41,7 @@ print("Change the price for the first product in both Sheet1 and Sheet2:")
 try:
     wbs["Sheet1"]['B2'] = 321
     wbs["Sheet2"]['B'][2].value = 876
-    wbs["Sheet1"][2][2].value = 111
+    wbs["Sheet1"][2][1].value = 111
     printCell(wbs["Sheet1"])
     print("Make the change into the excel file:")
     wbs.save(file)
