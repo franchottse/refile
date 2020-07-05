@@ -1,5 +1,3 @@
-import csv
-import pandas as pd
 import openpyxl
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import ReadOnlyWorkbookException
