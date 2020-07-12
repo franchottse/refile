@@ -1,11 +1,15 @@
 import openpyxl
+import tkinter as tk
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import ReadOnlyWorkbookException
+from tkinter import filedialog, Text, scrolledtext, messagebox
 
-file = r"C:\Users\tsezg523\Desktop\testfile.xlsx"
+# This code is mainly for modifying or showing Excel files
 
-wbs = load_workbook(file, read_only=False)
-ws1 = wbs["Sheet1"]
+# file = r"C:\Users\tsezg523\Desktop\testfile.xlsx"
+
+# wbs = load_workbook(file, read_only=False)
+# ws1 = wbs["Sheet1"]
 
 
 def test_function():
@@ -28,14 +32,4 @@ def printCell(sheet):
         # print new line
         print('\n')
 
-
-# TODO: Try to add files
-def addFile():
-    '''for widget in fileFrame.winfo_children():
-        widget.destroy()
-
-    filename = filedialog.askopenfilename(initialdir="/", title="Select File",
-                                          filetypes=[("Image Files", "*.jpg *.jpeg *.png *.gif"), ("JPENG", "*.jpg *.jpeg"), ("PNG", "*.png"), ("GIF", "*.gif")])
-    if filename not in apps:
-        apps.append(filename)
-    print(filename)'''
+# TODO: Try to access Excel files
