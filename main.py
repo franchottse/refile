@@ -20,8 +20,10 @@ class ReFile(tk.Frame):
 
     # TODO: Beautify the layout of the GUI
     def configureGUI(self):
-        # App title
+        # App title & configuration
         self.master.winfo_toplevel().title('ReFile')
+        self.master.geometry('1200x700')
+        self.master.configure(bg='skyblue')
         self.master.minsize(640, 480)
 
         # Menu
@@ -34,20 +36,28 @@ class ReFile(tk.Frame):
         self.subMenu.add_separator()
         self.subMenu.add_command(label='Exit', command=self.master.destroy)
 
-        # Create a canvas
-        self.canvas = tk.Canvas(self.master, height=700,
-                                width=1200, bg='#ACBFC9')
+        self.helpMenu = Menu(self.menu, tearoff=False)
+        self.menu.add_cascade(label='Help', menu=self.helpMenu)
+        self.helpMenu.add_command(label='About')
 
-        # Create a frame for displaying data
-        self.dataFrame = tk.Frame(self.master)
-        self.dataFrame.place(relwidth=0.6, relheight=0.6, relx=0.3, rely=0.1)
-        self.dataLabel = tk.Label(self.dataFrame, text='Data', bg='#18EBA0')
+        # Configure grids
+        for x in range(5):
+            tk.Grid.columnconfigure(self.master, x, weight=1 if x == 2 else 99)
+        for y in range(3):
+            tk.Grid.rowconfigure(
+                self.master, y, weight=300-y*100 if y != 2 else 1)
+        self.master.grid_columnconfigure(0, minsize=200)
+
+        # Create frame for displaying data
+        self.dataFrame = tk.Frame(self.master, bg='#B5ACA8')
+        self.dataLabel = tk.Label(self.dataFrame, text='Data', bg='white')
+        self.dataFieldLabel = tk.Label(self.dataFrame, bg='white')
 
         # Test tree view
         cols = ('Position', 'Name', 'Score',
                 'Random Stuff', 'Another Random Stuff')
         self.listBox = ttk.Treeview(
-            self.dataFrame, columns=cols, show='headings', selectmode=tk.BROWSE)
+            self.dataFieldLabel, columns=cols, show='headings', selectmode=tk.BROWSE)
         # set column headings
         for col in cols:
             self.listBox.column(col)
@@ -64,43 +74,65 @@ class ReFile(tk.Frame):
         self.listBox.configure(xscrollcommand=self.HorizontalScrollBar.set,
                                yscrollcommand=self.verticalScrollBar.set)
 
+        # TODO: Fix showing row colour problem
+        self.listBox.tag_configure('oddrow', background='orange')
+
         # End of test tree view
 
         # Create a frame for displaying files
-        self.fileFrame = tk.Frame(self.master, bg='#20313A')
-        self.fileFrame.place(relwidth=0.8, relheight=0.2, relx=0.1, rely=0.7)
-        self.fileLabel = tk.Label(self.fileFrame, text='Files', bg='#18EBA0')
-        # self.fileLabel.grid(column=1, row=0, sticky='NSWE')
+        self.fileFrame = tk.Frame(self.master, bg='#B5ACA8')
+        self.fileLabel = tk.Label(self.fileFrame, text='Files', bg='white')
 
+        # TODO: Add two sections for sheets and columns
         # Create a frame for displaying check boxes
-        self.checkBoxFrame = tk.Frame(self.master, bg='#172A33')
-        self.checkBoxFrame.place(
-            relwidth=0.2, relheight=0.6, relx=0.1, rely=0.1)
+        self.checkBoxFrame = tk.Frame(self.master, bg='#B5ACA8')
         self.checkBoxLabel = tk.Label(
-            self.checkBoxFrame, text='Columns', bg='#18EBA0')
+            self.checkBoxFrame, text='Columns', bg='white')
+        self.checkBoxFieldLabel = tk.Label(self.checkBoxFrame, bg='white')
 
+    def createWidgets(self):
         # Pack everything
-        self.canvas.pack(fill=tk.BOTH, expand=True)
-        self.dataLabel.pack(padx=0.5, pady=0.1, fill=tk.X)
+        self.checkBoxFrame.grid(row=0, column=0, padx=10,
+                                pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
+        self.dataFrame.grid(row=0, column=1, columnspan=4, padx=10,
+                            pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
+        self.fileFrame.grid(row=1, column=0, columnspan=5, padx=10,
+                            pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
+
+        self.dataLabel.pack(padx=5, pady=5, fill=tk.X)
+
         self.HorizontalScrollBar.pack(side=tk.BOTTOM, fill=tk.X, expand=False)
         self.verticalScrollBar.pack(side=tk.RIGHT, fill=tk.Y, expand=False)
+
         self.sizegrip.pack(in_=self.HorizontalScrollBar,
                            side=tk.BOTTOM, anchor=tk.S+tk.E)
         self.listBox.pack(fill=tk.BOTH, expand=True)
+        self.dataFieldLabel.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
         self.fileLabel.pack(padx=0.5, pady=0.1)
-        self.checkBoxLabel.pack(padx=0.1, pady=0.1)
 
-    def createWidgets(self):
-        # Create an select files button
-        buttonStyle = {'padx': '10', 'pady': '5', 'fg': '#18EBA0', 'bg': '#20313A',
-                       'activebackground': '#172A33', 'activeforeground': '#18EBA0', 'bd': '2'}
+        self.checkBoxLabel.pack(padx=5, pady=5)
+        self.checkBoxFieldLabel.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
+
+        # Button configuration
+        buttonStyle = {'padx': '10', 'pady': '5', 'fg': 'black', 'bg': 'white',
+                       'activebackground': '#F5E7D7', 'activeforeground': 'black', 'bd': '2'}
+        self.buttonFrame = tk.Frame(self.master, bg='#B5ACA8')
+        self.buttonFrame.grid(row=2, column=2, padx=10,
+                              pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
+
+        # Create select files button
         self.openFile = tk.Button(
-            self.master, text='Select File', **buttonStyle, command=self.addFile)
-        self.openFile.place(relx=0.5, rely=0.95, anchor=tk.CENTER)
+            self.buttonFrame, text='Select File', **buttonStyle, command=self.addFile)
+
+        self.openFile.grid(row=0, column=0, padx=5, pady=5,
+                           sticky=tk.N+tk.S+tk.E+tk.W)
 
         # Test button
-        tk.Button(self.master, text="Show scores", **buttonStyle,
-                  command=self.show).place(relx=0.6, rely=0.95, anchor=tk.CENTER)
+        tk.Button(self.buttonFrame, text="Show scores", **buttonStyle,
+                  command=self.show).grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
+
+        # Bind fileFrame with addFile function
+        self.fileFrame.bind('<Double-ButtonRelease-1>', self.addFile)
 
     # Demo function
     def show(self):
@@ -136,7 +168,7 @@ class ReFile(tk.Frame):
             # label.place(relx=0.5, rely=0.1)
             label.pack(padx=0.5, pady=0.1)
 
-    def addFile(self):
+    def addFile(self, event=None):
         xlFile = filedialog.askopenfilename(initialdir='/', title='Select File',
                                             filetypes=[('Excel Files', '.xlsx')])
 
