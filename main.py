@@ -13,17 +13,26 @@ class ReFile(tk.Frame):
         
         # Style setup
         self.style = ttk.Style(self.master) 
-        #self.style.theme_use('clam')
-        self.style.configure('TFrame', background="#B5ACA8", padding=5)
-        self.style.configure('TButton', font =('bold'), borderwidth = '5')
-        #buttonStyle = {'padx': '10', 'pady': '5', 'fg': 'black', 'bg': 'white', 'activebackground': '#F5E7D7', 'activeforeground': 'black', 'bd': '2'}
-        self.style.map('TButton', foreground = [('active', '!disabled', 'black'), ('pressed', 'black')], background = [('active', 'white'), ('pressed', '!disabled', '#F5E7D7')])
+        self.style.theme_use('clam')
         self.fileHighlightColour = 'grey'
         self.fileHoverColour = 'orange'
         self.filePressColour = '#ED5903'
         self.fileBackgroundColour = '#EBD987'
         self.labelColour = 'white'
-        
+        self.style.configure('TFrame', background="#B5ACA8", padding=5)
+        self.style.configure('Wild.TButton', background='white', foreground='black', font=('Helvetica', 13))
+        #buttonStyle = {'padx': '10', 'pady': '5', 'fg': 'black', 'bg': 'white', 'activebackground': '#F5E7D7', 'activeforeground': 'black', 'bd': '2'}
+        self.style.map('Wild.TButton', foreground = [('active', 'black'),
+                                                     ('pressed', 'black'),
+                                                     ('disabled', 'grey')],
+                                       background = [('active', 'orange'),
+                                                     ('pressed', '!disabled', '#ED5903'),
+                                                     ('disabled', 'white')])
+        #self.style.configure("TEST.TLabel", foreground='white', background='black', font=(10))
+        self.style.configure('Tab.TLabel', background='white', font=('Helvetica', '11', 'bold'), relief=tk.SOLID, anchor=tk.CENTER)
+        self.style.configure('File.TLabel', background=self.fileBackgroundColour, font=('Helvetica', 10))
+        self.style.configure('Status.TLabel', background='white', highlightbackground='#ED5903', font=('Helvetica', 13), relief=tk.SOLID, anchor=tk.CENTER)
+
         # App setup
         self.configureGUI()
         self.createWidgets()
@@ -63,8 +72,8 @@ class ReFile(tk.Frame):
         # Create frame for displaying data
         self.dataFrame = ttk.Frame(self.master)
         #self.dataLabel = tk.Label(self.dataFrame, text='Data', bg='white')
-        self.dataLabel = ttk.Label(self.dataFrame, text='Data', background=self.labelColour, relief = tk.SOLID, anchor=tk.CENTER)
-        self.dataFieldLabel = ttk.Label(self.dataFrame, background='white', relief = tk.SOLID, anchor=tk.CENTER)
+        self.dataLabel = ttk.Label(self.dataFrame, text='Data', style='Tab.TLabel')
+        self.dataFieldLabel = ttk.Label(self.dataFrame, style='Tab.TLabel')
 
         # Test tree view
         cols = ('Position', 'Name', 'Score',
@@ -92,34 +101,39 @@ class ReFile(tk.Frame):
 
         # End of test tree view
 
+        # TODO: Fix scrolling frame or label
         # Create a frame for displaying files
         self.fileFrame = ttk.Frame(self.master)
-        self.fileLabel = ttk.Label(self.fileFrame, text='Files', background=self.labelColour, relief = tk.SOLID, anchor=tk.CENTER)
-        self.fileList = tk.Canvas(self.fileFrame, background='white')
-        self.fileScrollBar = ttk.Scrollbar(self.fileFrame, orient=tk.HORIZONTAL, command=self.fileList.xview)
-        self.fileList.configure(xscrollcommand=self.fileScrollBar.set)
+        self.fileLabel = ttk.Label(self.fileFrame, text='Files', style='Tab.TLabel')
+        self.fileListCanvas = tk.Canvas(self.fileFrame, background='white')
+        self.fileScrollBar = ttk.Scrollbar(self.fileFrame, orient=tk.HORIZONTAL, command=self.fileListCanvas.xview)
+        self.fileList = ttk.Frame(self.fileListCanvas)
+        self.fileList.bind('<Configure>', lambda e: self.fileListCanvas.configure(scrollregion=self.fileListCanvas.bbox('all')))
+        #self.fileListCanvas.create_window((0, 0), window=self.fileList, anchor=tk.N+tk.W)
+        self.fileListCanvas.configure(xscrollcommand=self.fileScrollBar.set)
+        # Bind fileFrame with addFile function
+        self.fileList.bind('<Double-ButtonRelease-1>', self.addFile)
 
         # TODO: Add two sections for sheets and columns
         # Create a frame for displaying check boxes
         self.checkBoxFrame = ttk.Frame(self.master)
-        self.checkBoxLabel = ttk.Label(
-            self.checkBoxFrame, text='Columns', background='white', relief = tk.SOLID, anchor=tk.CENTER)
-        self.checkBoxFieldLabel = ttk.Label(self.checkBoxFrame, background=self.labelColour, relief = tk.SOLID, anchor=tk.CENTER)
+        self.checkBoxLabel = ttk.Label(self.checkBoxFrame, text='Columns', style='Tab.TLabel')
+        self.checkBoxFieldLabel = ttk.Label(self.checkBoxFrame, background='white')
 
         # Button configuration
-        buttonStyle = {'padx': '10', 'pady': '5', 'fg': 'black', 'bg': 'white', 'activebackground': '#F5E7D7', 'activeforeground': 'black', 'bd': '2'}
+        #buttonStyle = {'padx': '10', 'pady': '5', 'fg': 'black', 'bg': 'white', 'activebackground': '#F5E7D7', 'activeforeground': 'black', 'bd': '2'}
         self.buttonFrame = tk.Frame(self.master, bg='#B5ACA8')
-
-        # Reference frames
-        self.statusFrame = tk.Frame(self.master, bg='#B5ACA8')
-        self.statusLabel = tk.Label(self.statusFrame, text='Welcome to ReFile! Please double click the file area or click Select File to add files', relief=tk.SOLID)
 
         # Select File button
         self.openFile = ttk.Button(
-            self.buttonFrame, text='Select File', command=self.addFile)
+            self.buttonFrame, text='Select File', style='Wild.TButton', command=self.addFile)
 
         # Clear File button
-        self.clearFile = ttk.Button(self.buttonFrame, text="Clear All Files", command=self.show)
+        self.clearFile = ttk.Button(self.buttonFrame, text='Clear All Files', style='Wild.TButton', command=self.show)
+
+        # Reference frames
+        self.statusFrame = tk.Frame(self.master, bg='#B5ACA8')
+        self.statusLabel = ttk.Label(self.statusFrame, text='Welcome to ReFile! Please double click the file area or click Select File to add files', style='Status.TLabel')
 
     # Pack everything
     def createWidgets(self):
@@ -133,12 +147,13 @@ class ReFile(tk.Frame):
 
         self.dataLabel.pack(padx=5, pady=5, fill=tk.X)
         self.fileLabel.pack(padx=5, pady=5, fill=tk.X)
-        self.fileList.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
-        self.fileScrollBar.pack(padx=5, pady=5, side=tk.BOTTOM, fill=tk.X, expand=False)
+        self.fileListCanvas.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
+        self.fileList.pack(padx=5, pady=5, fill=tk.BOTH)
+        self.fileScrollBar.pack(padx=5, pady=5, side=tk.BOTTOM, fill=tk.X)
 
         # Treeview in data frame
-        self.HorizontalScrollBar.pack(side=tk.BOTTOM, fill=tk.X, expand=False)
-        self.verticalScrollBar.pack(side=tk.RIGHT, fill=tk.Y, expand=False)
+        self.HorizontalScrollBar.pack(side=tk.BOTTOM, fill=tk.X)
+        self.verticalScrollBar.pack(side=tk.RIGHT, fill=tk.Y)
 
         self.sizegrip.pack(in_=self.HorizontalScrollBar,
                            side=tk.BOTTOM, anchor=tk.S+tk.E)
@@ -146,11 +161,11 @@ class ReFile(tk.Frame):
         self.dataFieldLabel.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
         
 
-        self.checkBoxLabel.pack(padx=5, pady=5)
+        self.checkBoxLabel.pack(padx=5, pady=5, fill=tk.X)
         self.checkBoxFieldLabel.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
 
         # Button frame
-        self.buttonFrame.grid(row=2, column=0, padx=10, pady=5)
+        self.buttonFrame.grid(row=2, column=0, padx=10, pady=5, sticky=tk.W)
 
         # Status bar
         self.statusFrame.grid(row=2, column=1, columnspan=2, padx=10, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
@@ -164,11 +179,13 @@ class ReFile(tk.Frame):
         #tk.Button(self.buttonFrame, text="Show scores", **buttonStyle,command=self.show).grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
         self.clearFile.grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
 
-        # Bind fileFrame with addFile function
-        self.fileList.bind('<Double-ButtonRelease-1>', self.addFile)
-
     # Demo function
     def show(self):
+        self.xlFiles.clear()
+        for widget in self.fileList.winfo_children():
+            if isinstance(widget, ttk.Label):
+                widget.destroy()
+
         tempList = [['Jim', '0.33', 'What', 'Hello'], ['Dave', '0.67', 'is', ''],
                     ['James', '0.67', 'Tkinter', 'World'], ['Eden', '0.5', '?', '']]
         # tempList.sort(key=lambda e: e[1], reverse=True)
@@ -222,24 +239,25 @@ class ReFile(tk.Frame):
                 tempFiles = tempFiles.split('\n')
                 self.xlFiles = [x for x in tempFiles if x.strip()]
                 print('File list:', self.xlFiles)
+        self.statusLabel['text'] = 'Welcome to ReFile! Please double click the file area or click Select File to add files.'
 
     def displayFiles(self):
         print(self.xlFiles)
         for xlFile in self.xlFiles:
-            label = ttk.Label(self.fileList, text=xlFile, background=self.fileBackgroundColour)
+            label = ttk.Label(self.fileList, text=xlFile, style='File.TLabel')
             #label.bind('<Button-1>', self.fileHighlighter)
             label.bind('<Enter>', self.onEntering)
             label.bind('<Leave>', self.onLeaving)
             label.bind('<ButtonPress-1>', self.onPressing)
-            label.bind('<ButtonRelease-1>', self.ReleaseHightlight)
-            label.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.BOTH, expand=True)
+            label.bind('<ButtonRelease-1>', self.releaseHightlight)
+            label.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.BOTH)
 
     # Call two functions when releasing mouse key
-    def ReleaseHightlight(self, event):
+    def releaseHightlight(self, event):
         self.onReleasing(event)
         self.fileHighlighter(event)
 
-    # TODO: Fix the problem of how to highlight only one item
+    # TODO: Fix the problem of how to highlight only one item (on hold)
     # An event to highlight a file when clicked
     def fileHighlighter(self, event):
         '''oldHightlightLabel = ttk.Label()
@@ -255,6 +273,8 @@ class ReFile(tk.Frame):
         self.statusLabel['text'] = os.path.basename(event.widget.cget('text')) + ' selected.'
 
     def addFile(self, event=None):
+        self.openFile.state(['disabled'])
+        self.clearFile.state(['disabled'])
         self.statusLabel['text'] = 'Selecting files'
         xlFile = filedialog.askopenfilename(initialdir='/', title='Select File',
                                             filetypes=[('Excel Files', '.xlsx')])
@@ -262,16 +282,20 @@ class ReFile(tk.Frame):
         if xlFile not in self.xlFiles and xlFile != '':
             self.xlFiles.append(xlFile)
             self.statusLabel['text'] = 'Added new file: ' + os.path.basename(xlFile)
-            print('New file: '+xlFile)
+            print('New file: ' + xlFile)
         elif xlFile in self.xlFiles:
             self.statusLabel['text'] = 'You have added this file before.'
             messagebox.showinfo(
                 'Information', 'You have added this file.')
 
-        for widget in self.fileFrame.winfo_children():
+        for widget in self.fileList.winfo_children():
             # print(widget.cget('text'))
             if isinstance(widget, ttk.Label) and widget.cget('text') != 'Files':
                 widget.destroy()
+
+        self.openFile.state(['!disabled'])
+        self.clearFile.state(['!disabled'])
+        self.statusLabel['text'] = 'Complete!'
         self.displayFiles()
 
     # TODO: Solve the problem of passing arguments to other python files for Excel files
