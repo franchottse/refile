@@ -215,7 +215,6 @@ class ReFile(tk.Frame):
         #self.fileListFrame.config(width=1)
         #self.fileListCanvas.itemconfig(self.fileListFrame, fill=tk.Y)
         #self.fileListCanvas.itemconfig(self.fileListFrame, 0)
-        #self.fileL
         self.onFileListFrameResizing()
 
         tempList = [['Jim', '0.33', 'What', 'Hello'], ['Dave', '0.67', 'is', ''],
