@@ -3,17 +3,21 @@ from tkinter import filedialog, Text, messagebox, ttk, Menu
 import os
 import func
 
-
 class ReFile(tk.Frame):
 
     def __init__(self, master):
         self.xlFiles = []
         self.master = master
+        #super().__init__('clam')
         tk.Frame.__init__(self, self.master)
         
         # Style setup
+        self.width = 1200
+        self.height = 700
+        self.xPosition = (self.master.winfo_screenwidth() // 2) - (self.width // 2)
+        self.yPosition = (self.master.winfo_screenheight() // 2) - (self.height // 2)
         self.style = ttk.Style(self.master) 
-        self.style.theme_use('clam')
+        #self.style.theme_use('clam')
         self.fileHighlightColour = 'grey'
         self.fileHoverColour = 'orange'
         self.filePressColour = '#ED5903'
@@ -46,7 +50,7 @@ class ReFile(tk.Frame):
     def configureGUI(self):
         # App title & configuration
         self.master.winfo_toplevel().title('ReFile')
-        self.master.geometry('1200x700')
+        self.master.geometry('{}x{}+{}+{}'.format(self.width, self.height, self.xPosition, self.yPosition))
         self.master.configure(bg='skyblue')
         self.master.minsize(640, 480)
 
@@ -65,9 +69,11 @@ class ReFile(tk.Frame):
         self.helpMenu.add_command(label='About')
 
         # Configure grids
-        tk.Grid.rowconfigure(self.master, (0, 1), weight=1)
+        tk.Grid.rowconfigure(self.master, 0, weight=2)
+        tk.Grid.rowconfigure(self.master, 1, weight=1)
         tk.Grid.columnconfigure(self.master, (1, 2), weight=1)
         self.master.grid_columnconfigure(0, minsize=280)
+        self.master.grid_rowconfigure(1, minsize=200)
 
         # Create frame for displaying data
         self.dataFrame = ttk.Frame(self.master)
@@ -88,12 +94,12 @@ class ReFile(tk.Frame):
         self.verticalScrollBar = ttk.Scrollbar(
             self.dataFrame, orient=tk.VERTICAL, command=self.dataBox.yview)
 
-        self.HorizontalScrollBar = ttk.Scrollbar(
+        self.horizontalScrollBar = ttk.Scrollbar(
             self.dataFrame, orient=tk.HORIZONTAL, command=self.dataBox.xview)
 
         self.sizegrip = ttk.Sizegrip(self.dataFrame)
 
-        self.dataBox.configure(xscrollcommand=self.HorizontalScrollBar.set,
+        self.dataBox.configure(xscrollcommand=self.horizontalScrollBar.set,
                                yscrollcommand=self.verticalScrollBar.set)
 
         # TODO: Fix showing row colour problem
@@ -101,24 +107,28 @@ class ReFile(tk.Frame):
 
         # End of test tree view
 
-        # TODO: Fix scrolling frame or label
         # Create a frame for displaying files
         self.fileFrame = ttk.Frame(self.master)
         self.fileLabel = ttk.Label(self.fileFrame, text='Files', style='Tab.TLabel')
         self.fileListCanvas = tk.Canvas(self.fileFrame, background='white')
+        self.fileListFrame = ttk.Frame(self.fileListCanvas)
         self.fileScrollBar = ttk.Scrollbar(self.fileFrame, orient=tk.HORIZONTAL, command=self.fileListCanvas.xview)
-        self.fileList = ttk.Frame(self.fileListCanvas)
-        self.fileList.bind('<Configure>', lambda e: self.fileListCanvas.configure(scrollregion=self.fileListCanvas.bbox('all')))
-        #self.fileListCanvas.create_window((0, 0), window=self.fileList, anchor=tk.N+tk.W)
         self.fileListCanvas.configure(xscrollcommand=self.fileScrollBar.set)
-        # Bind fileFrame with addFile function
-        self.fileList.bind('<Double-ButtonRelease-1>', self.addFile)
+
+        self.fileListCanvas.create_window((0, 0), window=self.fileListFrame, height=150)
+        self.fileListFrame.bind('<Configure>', lambda e: self.fileListCanvas.configure(scrollregion=self.fileListCanvas.bbox('all')))
+        self.fileListCanvas.bind('<Configure>', self.onFileListFrameResizing)
+        #self.fileListCanvas.bind('<Configure>', lambda e: self.fileListCanvas.itemconfig(self.fileCanvasFrame, width=e.width))
+
+        # Bind fileListCanvas with addFile function
+        self.fileListFrame.bind('<Double-ButtonRelease-1>', self.addFile)
+        self.fileListCanvas.bind('<Double-ButtonRelease-1>', self.addFile)
 
         # TODO: Add two sections for sheets and columns
         # Create a frame for displaying check boxes
         self.checkBoxFrame = ttk.Frame(self.master)
         self.checkBoxLabel = ttk.Label(self.checkBoxFrame, text='Columns', style='Tab.TLabel')
-        self.checkBoxFieldLabel = ttk.Label(self.checkBoxFrame, background='white')
+        self.checkBoxFieldLabel = ttk.Label(self.checkBoxFrame, background='white', style='Tab.TLabel')
 
         # Button configuration
         #buttonStyle = {'padx': '10', 'pady': '5', 'fg': 'black', 'bg': 'white', 'activebackground': '#F5E7D7', 'activeforeground': 'black', 'bd': '2'}
@@ -135,6 +145,24 @@ class ReFile(tk.Frame):
         self.statusFrame = tk.Frame(self.master, bg='#B5ACA8')
         self.statusLabel = ttk.Label(self.statusFrame, text='Welcome to ReFile! Please double click the file area or click Select File to add files', style='Status.TLabel')
 
+    # TODO: Fix the position of the frame inside the canvas
+    def recreateFileCanvasFrame(self):
+        self.fileListFrame = ttk.Frame(self.fileListCanvas)
+
+        self.fileListCanvas.create_window((0, 0), window=self.fileListFrame, height=150)
+        self.fileListFrame.bind('<Configure>', lambda e: self.fileListCanvas.configure(scrollregion=self.fileListCanvas.bbox('all')))
+        #self.fileListCanvas.bind('<Configure>', lambda e: self.fileListCanvas.itemconfig(self.fileCanvasFrame, width=e.width))
+
+    def destroyFileCanvasFrame(self):
+        self.fileListFrame.destroy()
+        self.fileScrollBar.pack_forget()
+
+    def onFileListFrameResizing(self, event=None):
+        if self.fileListFrame.winfo_width() < self.fileListCanvas.winfo_width():
+            self.fileScrollBar.pack_forget()
+        else:
+            self.fileScrollBar.pack(padx=5, pady=(0, 5), side=tk.BOTTOM, fill=tk.X)
+
     # Pack everything
     def createWidgets(self):
         # Check box, data and file frames
@@ -148,21 +176,18 @@ class ReFile(tk.Frame):
         self.dataLabel.pack(padx=5, pady=5, fill=tk.X)
         self.fileLabel.pack(padx=5, pady=5, fill=tk.X)
         self.fileListCanvas.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
-        self.fileList.pack(padx=5, pady=5, fill=tk.BOTH)
-        self.fileScrollBar.pack(padx=5, pady=5, side=tk.BOTTOM, fill=tk.X)
+        self.fileScrollBar.pack(padx=5, pady=(5, 0), side=tk.BOTTOM, fill=tk.X)
 
         # Treeview in data frame
-        self.HorizontalScrollBar.pack(side=tk.BOTTOM, fill=tk.X)
+        self.horizontalScrollBar.pack(side=tk.BOTTOM, fill=tk.X, padx=(0, 17))
         self.verticalScrollBar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        self.sizegrip.pack(in_=self.HorizontalScrollBar,
-                           side=tk.BOTTOM, anchor=tk.S+tk.E)
+        #self.sizegrip.pack(in_=self.horizontalScrollBar, anchor=tk.S+tk.E)
+        self.dataFieldLabel.pack(padx=5, pady=(0, 5), fill=tk.BOTH, expand=True)
         self.dataBox.pack(fill=tk.BOTH, expand=True)
-        self.dataFieldLabel.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
-        
 
         self.checkBoxLabel.pack(padx=5, pady=5, fill=tk.X)
-        self.checkBoxFieldLabel.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
+        self.checkBoxFieldLabel.pack(padx=5, pady=(0, 5), fill=tk.BOTH, expand=True)
 
         # Button frame
         self.buttonFrame.grid(row=2, column=0, padx=10, pady=5, sticky=tk.W)
@@ -179,12 +204,19 @@ class ReFile(tk.Frame):
         #tk.Button(self.buttonFrame, text="Show scores", **buttonStyle,command=self.show).grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
         self.clearFile.grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
 
-    # Demo function
+    # Demo function with clear all files ability
     def show(self):
         self.xlFiles.clear()
-        for widget in self.fileList.winfo_children():
-            if isinstance(widget, ttk.Label):
-                widget.destroy()
+        for widget in self.fileListFrame.winfo_children():
+            widget.destroy()
+        self.master.update()
+        self.destroyFileCanvasFrame()
+        self.recreateFileCanvasFrame()
+        #self.fileListFrame.config(width=1)
+        #self.fileListCanvas.itemconfig(self.fileListFrame, fill=tk.Y)
+        #self.fileListCanvas.itemconfig(self.fileListFrame, 0)
+        #self.fileL
+        self.onFileListFrameResizing()
 
         tempList = [['Jim', '0.33', 'What', 'Hello'], ['Dave', '0.67', 'is', ''],
                     ['James', '0.67', 'Tkinter', 'World'], ['Eden', '0.5', '?', '']]
@@ -242,15 +274,17 @@ class ReFile(tk.Frame):
         self.statusLabel['text'] = 'Welcome to ReFile! Please double click the file area or click Select File to add files.'
 
     def displayFiles(self):
-        print(self.xlFiles)
+        print('File list:', self.xlFiles)
         for xlFile in self.xlFiles:
-            label = ttk.Label(self.fileList, text=xlFile, style='File.TLabel')
+            label = ttk.Label(self.fileListFrame, text=xlFile, style='File.TLabel')
             #label.bind('<Button-1>', self.fileHighlighter)
             label.bind('<Enter>', self.onEntering)
             label.bind('<Leave>', self.onLeaving)
             label.bind('<ButtonPress-1>', self.onPressing)
             label.bind('<ButtonRelease-1>', self.releaseHightlight)
             label.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.BOTH)
+        self.master.update()
+        self.onFileListFrameResizing()
 
     # Call two functions when releasing mouse key
     def releaseHightlight(self, event):
@@ -276,19 +310,21 @@ class ReFile(tk.Frame):
         self.openFile.state(['disabled'])
         self.clearFile.state(['disabled'])
         self.statusLabel['text'] = 'Selecting files'
-        xlFile = filedialog.askopenfilename(initialdir='/', title='Select File',
+        files = filedialog.askopenfilenames(initialdir='/', title='Select File',
                                             filetypes=[('Excel Files', '.xlsx')])
 
-        if xlFile not in self.xlFiles and xlFile != '':
-            self.xlFiles.append(xlFile)
-            self.statusLabel['text'] = 'Added new file: ' + os.path.basename(xlFile)
-            print('New file: ' + xlFile)
-        elif xlFile in self.xlFiles:
-            self.statusLabel['text'] = 'You have added this file before.'
-            messagebox.showinfo(
-                'Information', 'You have added this file.')
+        for file in files:
+            if file not in self.xlFiles and file != '':
+                self.xlFiles.append(file)
+                #self.statusLabel['text'] = 'Added new file: ' + os.path.basename(file)
+                print('New file: ' + file)
+            elif file in self.xlFiles:
+                self.statusLabel['text'] = 'There is at least a file added before.'
+                messagebox.showinfo('Information', 'There is at least a file added before.')
+                self.addFile()
+                break
 
-        for widget in self.fileList.winfo_children():
+        for widget in self.fileListFrame.winfo_children():
             # print(widget.cget('text'))
             if isinstance(widget, ttk.Label) and widget.cget('text') != 'Files':
                 widget.destroy()
@@ -297,6 +333,8 @@ class ReFile(tk.Frame):
         self.clearFile.state(['!disabled'])
         self.statusLabel['text'] = 'Complete!'
         self.displayFiles()
+        print('self.fileListFrame.cget(\'width\'):', self.fileListFrame.cget('width'))
+        print('self.fileListFrame.winfo_width():', self.fileListFrame.winfo_width())
 
     # TODO: Solve the problem of passing arguments to other python files for Excel files
 
@@ -305,11 +343,9 @@ if __name__ == '__main__':
     root = tk.Tk()
     # xlFiles = []
     mainApp = ReFile(root)
-    '''if not mainApp.isFile():
-        messagebox.showinfo(
-            'Information', 'You do not have the previous saved list, please select a file in order to read files')'''
     mainApp.test_func()
     root.protocol('WM_DELETE_WINDOW', mainApp.onClosing)
+    #mainApp.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
     root.mainloop()
 
     with open('xlList.txt', 'w') as f:
