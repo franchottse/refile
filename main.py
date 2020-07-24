@@ -37,11 +37,16 @@ class ReFile(tk.Frame):
         self.style.configure('File.TLabel', background=self.fileBackgroundColour, font=('Helvetica', 10))
         self.style.configure('Status.TLabel', background='white', highlightbackground='#ED5903', font=('Helvetica', 13), relief=tk.SOLID, anchor=tk.CENTER)
 
+        # Set a variable to avoid packing file scrollbar repeatedly
+        self.initializing = True
+
         # App setup
         self.configureGUI()
         self.createWidgets()
         self.loadSavedList()
         self.displayFiles()
+        self.initializing = False
+        self.onFileListFrameResizing()
 
     def test_func(self):
         func.test_function()
@@ -115,9 +120,9 @@ class ReFile(tk.Frame):
         self.fileScrollBar = ttk.Scrollbar(self.fileFrame, orient=tk.HORIZONTAL, command=self.fileListCanvas.xview)
         self.fileListCanvas.configure(xscrollcommand=self.fileScrollBar.set)
 
-        self.fileCanvasFrame = self.fileListCanvas.create_window((0, 0), window=self.fileListFrame, height=150, anchor=tk.W)
-        self.fileListFrame.bind('<Configure>', lambda e: self.fileListCanvas.configure(scrollregion=self.fileListCanvas.bbox('all')))
-        self.fileListCanvas.bind('<Configure>', self.onFileListFrameResizing)
+        self.fileCanvasFrame = self.fileListCanvas.create_window((0, 0), window=self.fileListFrame, anchor=tk.W)
+        self.fileListFrame.bind('<Configure>', self.onFileListFrameResizing)
+        self.fileListCanvas.bind('<Configure>', self.onFileListCanvasResizing)
 
         # Bind fileListCanvas with addFile function
         self.fileListFrame.bind('<Double-ButtonRelease-1>', self.addFile)
@@ -144,22 +149,24 @@ class ReFile(tk.Frame):
         self.statusFrame = ttk.Frame(self.master)
         self.statusLabel = ttk.Label(self.statusFrame, text='Welcome to ReFile! Please double click the file area or click Select File to add files', style='Status.TLabel')
 
-    # TODO: Fix the problem of not showing entire fileListFrame when opening window initially
     def onFileListFrameResizing(self, event=None):
-        #print('self.fileListFrame.winfo_width(): ', str(self.fileListFrame.winfo_width())+', self.fileListCanvas.winfo_width(): ', self.fileListCanvas.winfo_width())
-        #print('self.fileListCanvas.winfo_rootx(self.fileCanvasFrame):', str(self.fileListCanvas.coords(self.fileCanvasFrame))+', self.fileListCanvas.winfo_rooty(self.fileCanvasFrame):', self.fileListCanvas.coords(self.fileCanvasFrame))
+        self.fileListCanvas.configure(scrollregion=self.fileListCanvas.bbox(tk.ALL))
+        self.checkFilelistCanvasFrame()
+
+    def onFileListCanvasResizing(self, event=None):
         if event != None:
-            print('event:', event)
-            print('self.fileListCanvas', self.fileListCanvas)
-            canvasHeight = event.height
-            self.fileListCanvas.itemconfig(self.fileCanvasFrame, height=canvasHeight)
+            self.fileListCanvas.itemconfig(self.fileCanvasFrame, height=event.height)
+        self.checkFilelistCanvasFrame()
 
-        if self.fileListFrame.winfo_width() < self.fileListCanvas.winfo_width():
-            self.fileScrollBar.pack_forget()
-        else:
-            self.fileScrollBar.pack(padx=5, pady=(0, 5), side=tk.BOTTOM, fill=tk.X)
+    # Make the file scrollbar visible depending on file list frame size and file list canvas size
+    def checkFilelistCanvasFrame(self):
+        if not self.initializing:
+            if self.fileScrollBar.winfo_ismapped() and self.fileListFrame.winfo_width() <= self.fileListCanvas.winfo_width():
+                self.fileScrollBar.pack_forget()
+            if not self.fileScrollBar.winfo_ismapped() and self.fileListFrame.winfo_width() > self.fileListCanvas.winfo_width():
+                self.fileScrollBar.pack(padx=5, pady=(0, 5), side=tk.BOTTOM, fill=tk.X)
 
-    # Pack everything
+    # Pack and grid everything
     def createWidgets(self):
         # Check box, data and file frames
         self.checkBoxFrame.grid(row=0, column=0, padx=10,
@@ -172,8 +179,7 @@ class ReFile(tk.Frame):
         self.dataLabel.pack(padx=5, pady=5, fill=tk.X)
         self.fileLabel.pack(padx=5, pady=5, fill=tk.X)
         self.fileListCanvas.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
-        #self.fileListCanvas.itemconfig(self.fileCanvasFrame, height=self.fileListCanvas.winfo_height())
-        self.fileScrollBar.pack(padx=5, pady=(5, 0), side=tk.BOTTOM, fill=tk.X)
+        #self.fileScrollBar.pack(padx=5, pady=(0, 5), side=tk.BOTTOM, fill=tk.X)
 
         # Treeview in data frame
         self.horizontalScrollBar.pack(side=tk.BOTTOM, fill=tk.X, padx=(0, 17))
@@ -201,15 +207,16 @@ class ReFile(tk.Frame):
         #tk.Button(self.buttonFrame, text="Show scores", **buttonStyle,command=self.show).grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
         self.clearFile.grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
 
+    # TODO: Create 'delete a file(s)' functionality
     # Demo function with clear all files ability
     def show(self):
         self.xlFiles.clear()
         for widget in self.fileListFrame.winfo_children():
             widget.destroy()
 
+        # Make the file list frame resize when deleting files
         self.master.update()
         self.fileListFrame.config(width=1)
-        self.onFileListFrameResizing()
 
         tempList = [['Jim', '0.33', 'What', 'Hello'], ['Dave', '0.67', 'is', ''],
                     ['James', '0.67', 'Tkinter', 'World'], ['Eden', '0.5', '?', '']]
