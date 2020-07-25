@@ -10,7 +10,8 @@ class ReFile(tk.Frame):
         self.master = master
         #super().__init__('clam')
         tk.Frame.__init__(self, self.master)
-        
+        self.master.bind('<Delete>', self.deleteFiles)
+
         # Style setup
         self.width = 1200
         self.height = 700
@@ -37,8 +38,12 @@ class ReFile(tk.Frame):
         self.style.configure('File.TLabel', background=self.fileBackgroundColour, font=('Helvetica', 10))
         self.style.configure('Status.TLabel', background='white', highlightbackground='#ED5903', font=('Helvetica', 13), relief=tk.SOLID, anchor=tk.CENTER)
 
-        # Set a variable to avoid packing file scrollbar repeatedly
+        # Variable to avoid packing file scrollbar repeatedly
         self.initializing = True
+
+        # Variables to save the selected file(s) by the user
+        self.selectedFile = ''
+        self.selectedMultiFiles = []
 
         # App setup
         self.configureGUI()
@@ -47,9 +52,6 @@ class ReFile(tk.Frame):
         self.displayFiles()
         self.initializing = False
         self.onFileListFrameResizing()
-
-    def test_func(self):
-        func.test_function()
 
     # TODO: Beautify the layout of the GUI
     def configureGUI(self):
@@ -67,7 +69,7 @@ class ReFile(tk.Frame):
         self.menu.add_cascade(label='File', menu=self.subMenu)
         self.subMenu.add_command(label='Open File', command=self.addFile)
         self.subMenu.add_separator()
-        self.subMenu.add_command(label='Exit', command=self.onClosing)
+        self.subMenu.add_command(label='Exit', command=self.onClosingWindow)
 
         self.helpMenu = Menu(self.menu, tearoff=False)
         self.menu.add_cascade(label='Help', menu=self.helpMenu)
@@ -128,7 +130,7 @@ class ReFile(tk.Frame):
         self.fileListFrame.bind('<Double-ButtonRelease-1>', self.addFile)
         self.fileListCanvas.bind('<Double-ButtonRelease-1>', self.addFile)
 
-        # TODO: Add two sections for sheets and columns
+        # TODO: Add three sections for sheets, columns and showing selected columns only
         # Create a frame for displaying check boxes
         self.checkBoxFrame = ttk.Frame(self.master)
         self.checkBoxLabel = ttk.Label(self.checkBoxFrame, text='Columns', style='Tab.TLabel')
@@ -143,28 +145,11 @@ class ReFile(tk.Frame):
             self.buttonFrame, text='Select File', style='Wild.TButton', command=self.addFile)
 
         # Clear File button
-        self.clearFile = ttk.Button(self.buttonFrame, text='Clear All Files', style='Wild.TButton', command=self.show)
+        self.clearFile = ttk.Button(self.buttonFrame, text='Clear All Files', style='Wild.TButton', command=self.clearAllFiles)
 
         # Reference frames
         self.statusFrame = ttk.Frame(self.master)
         self.statusLabel = ttk.Label(self.statusFrame, text='Welcome to ReFile! Please double click the file area or click Select File to add files', style='Status.TLabel')
-
-    def onFileListFrameResizing(self, event=None):
-        self.fileListCanvas.configure(scrollregion=self.fileListCanvas.bbox(tk.ALL))
-        self.checkFilelistCanvasFrame()
-
-    def onFileListCanvasResizing(self, event=None):
-        if event != None:
-            self.fileListCanvas.itemconfig(self.fileCanvasFrame, height=event.height)
-        self.checkFilelistCanvasFrame()
-
-    # Make the file scrollbar visible depending on file list frame size and file list canvas size
-    def checkFilelistCanvasFrame(self):
-        if not self.initializing:
-            if self.fileScrollBar.winfo_ismapped() and self.fileListFrame.winfo_width() <= self.fileListCanvas.winfo_width():
-                self.fileScrollBar.pack_forget()
-            if not self.fileScrollBar.winfo_ismapped() and self.fileListFrame.winfo_width() > self.fileListCanvas.winfo_width():
-                self.fileScrollBar.pack(padx=5, pady=(0, 5), side=tk.BOTTOM, fill=tk.X)
 
     # Pack and grid everything
     def createWidgets(self):
@@ -207,33 +192,27 @@ class ReFile(tk.Frame):
         #tk.Button(self.buttonFrame, text="Show scores", **buttonStyle,command=self.show).grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
         self.clearFile.grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
 
-    # TODO: Create 'delete a file(s)' functionality
-    # Demo function with clear all files ability
-    def show(self):
-        self.xlFiles.clear()
-        for widget in self.fileListFrame.winfo_children():
-            widget.destroy()
+    def test_func(self):
+        func.test_function()
 
-        # Make the file list frame resize when deleting files
-        self.master.update()
-        self.fileListFrame.config(width=1)
+    # Make sure the scrollbar works for the file list frame
+    def onFileListFrameResizing(self, event=None):
+        self.fileListCanvas.configure(scrollregion=self.fileListCanvas.bbox(tk.ALL))
+        self.checkFilelistCanvasFrame()
 
-        tempList = [['Jim', '0.33', 'What', 'Hello'], ['Dave', '0.67', 'is', ''],
-                    ['James', '0.67', 'Tkinter', 'World'], ['Eden', '0.5', '?', '']]
-        # tempList.sort(key=lambda e: e[1], reverse=True)
+    # Keep file list frame remaining the same size
+    def onFileListCanvasResizing(self, event=None):
+        if event != None:
+            self.fileListCanvas.itemconfig(self.fileCanvasFrame, height=event.height)
+        self.checkFilelistCanvasFrame()
 
-        for i, (name, score, stuff, stuff1) in enumerate(tempList, start=1):
-            self.dataBox.insert('', 'end', values=(
-                i, name, score, stuff, stuff1), tags = 'oddrow' if i%2 == 1 else '')
-    # End of demo function
-
-    # Close window event
-    def onClosing(self):
-        self.statusLabel['text'] = 'Leaving ReFile'
-        if messagebox.askokcancel('Quit', 'Are you sure you want to close the window?'):
-            self.master.destroy()
-        else:
-            self.statusLabel['text'] = ''
+    # Make the file scrollbar visible depending on file list frame size and file list canvas size
+    def checkFilelistCanvasFrame(self):
+        if not self.initializing:
+            if self.fileScrollBar.winfo_ismapped() and self.fileListFrame.winfo_width() <= self.fileListCanvas.winfo_width():
+                self.fileScrollBar.pack_forget()
+            if not self.fileScrollBar.winfo_ismapped() and self.fileListFrame.winfo_width() > self.fileListCanvas.winfo_width():
+                self.fileScrollBar.pack(padx=5, pady=(0, 5), side=tk.BOTTOM, fill=tk.X)
 
     # Enter event for files
     def onEntering(self, event):
@@ -254,6 +233,59 @@ class ReFile(tk.Frame):
     # Mouse release event for files
     def onReleasing(self, event):
         event.widget.config(background=self.fileHoverColour)
+
+    # Close window event
+    def onClosingWindow(self):
+        self.statusLabel['text'] = 'Leaving ReFile'
+        if messagebox.askokcancel('ReFile', 'Are you sure you want to close the window?'):
+            self.master.destroy()
+        else:
+            self.statusLabel['text'] = ''
+
+    # TODO: Create 'delete file(s)' functionality
+    def deleteFiles(self, event=None):
+        if self.selectedFile == '':
+            return
+
+        for frame in self.fileListFrame.winfo_children():
+            for widget in frame.winfo_children():
+                if self.selectedFile == widget.cget('text'):
+                    frame.destroy()
+                    self.xlFiles.remove(self.selectedFile)
+                    self.statusLabel['text'] = os.path.basename(self.selectedFile) + ' deleted.'
+                    self.selectedFile = ''
+                    if not self.xlFiles:
+                        self.master.update()
+                        self.fileListFrame.config(width=1)
+
+    # Test function for selecting some files to delete
+    def selectMultiFiles(self, event=None):
+        if not event.widget.cget('text') in self.selectedMultiFiles:
+            self.selectedMultiFiles.append(event.widget.cget('text'))
+            self.statusLabel['text'] = str(len(self.selectedMultiFiles)) + ' file(s) selected.'
+
+    # Demo function with clear all files ability
+    def clearAllFiles(self):
+        if self.xlFiles and not messagebox.askyesno('ReFile', 'Do you really want to delete all files?'):
+            return
+        self.xlFiles.clear()
+        for widget in self.fileListFrame.winfo_children():
+            widget.destroy()
+
+        # Make the file list frame resize when deleting files
+        self.master.update()
+        self.fileListFrame.config(width=1)
+
+        tempList = [['Jim', '0.33', 'What', 'Hello'], ['Dave', '0.67', 'is', ''],
+                    ['James', '0.67', 'Tkinter', 'World'], ['Eden', '0.5', '?', '']]
+        # tempList.sort(key=lambda e: e[1], reverse=True)
+
+        for i, (name, score, stuff, stuff1) in enumerate(tempList, start=1):
+            self.dataBox.insert('', 'end', values=(
+                i, name, score, stuff, stuff1), tags = 'oddrow' if i%2 == 1 else '')
+    # End of demo function
+
+
 
     def isFile(self):
         if os.path.isfile('xlList.txt'):
@@ -285,13 +317,14 @@ class ReFile(tk.Frame):
         print(self.fileListCanvas.coords(self.fileCanvasFrame))
         print('File list:', self.xlFiles)
         for xlFile in self.xlFiles:
-            frame = tk.Frame(self.fileListFrame, bg='skyblue', height=self.fileListFrame.winfo_height(), width=self.fileListFrame.winfo_width())
+            frame = tk.Frame(self.fileListFrame, bg='skyblue')
             label = ttk.Label(frame, text=xlFile, style='File.TLabel')
             #label.bind('<Button-1>', self.fileHighlighter)
             label.bind('<Enter>', self.onEntering)
             label.bind('<Leave>', self.onLeaving)
             label.bind('<ButtonPress-1>', self.onPressing)
             label.bind('<ButtonRelease-1>', self.releaseHightlight)
+            #label.bind('<Control-ButtonRelease-1>', self.selectMultiFiles)
             frame.pack(padx=5, pady=5, side=tk.LEFT)
             label.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.BOTH)
 
@@ -317,6 +350,8 @@ class ReFile(tk.Frame):
             #oldHightlightLabel['background'] = self.fileBackgroundColour
         event.widget.config(background=self.fileHighlightColour)'''
         self.statusLabel['text'] = os.path.basename(event.widget.cget('text')) + ' selected.'
+        self.selectedFile = event.widget.cget('text')
+        print('self.selectedFile:', self.selectedFile)
 
     def addFile(self, event=None):
         self.openFile.state(['disabled'])
@@ -352,7 +387,7 @@ if __name__ == '__main__':
     root = tk.Tk()
     mainApp = ReFile(root)
     mainApp.test_func()
-    root.protocol('WM_DELETE_WINDOW', mainApp.onClosing)
+    root.protocol('WM_DELETE_WINDOW', mainApp.onClosingWindow)
     #mainApp.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
     root.mainloop()
 
