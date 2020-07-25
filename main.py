@@ -368,7 +368,7 @@ class ReFile(tk.Frame):
             elif file in self.xlFiles:
                 #self.statusLabel['text'] = 'There is at least a file added before.'
                 self.statusLabel['text'] = 'There is at least a file added before.'
-                messagebox.showinfo('Information', 'There is at least a file added before.')
+                messagebox.showinfo('ReFile', 'There is at least a file added before.')
                 self.addFile()
                 break
 
