@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog, Text, messagebox, ttk, Menu
+from PIL import Image, ImageTk
 import os
 import func
 
@@ -8,8 +9,8 @@ class ReFile(tk.Frame):
     def __init__(self, master):
         self.xlFiles = []
         self.master = master
-        #super().__init__('clam')
-        tk.Frame.__init__(self, self.master)
+        super().__init__()
+        #tk.Frame.__init__(self, self.master)
         self.master.bind('<Delete>', self.deleteFiles)
 
         # Style setup
@@ -45,6 +46,9 @@ class ReFile(tk.Frame):
         self.selectedFile = ''
         self.selectedMultiFiles = []
 
+        # Test variable to save the file label
+        self.fileLabelList = []
+
         # App setup
         self.configureGUI()
         self.createWidgets()
@@ -60,6 +64,9 @@ class ReFile(tk.Frame):
         self.master.geometry('{}x{}+{}+{}'.format(self.width, self.height, self.xPosition, self.yPosition))
         self.master.configure(bg='skyblue')
         self.master.minsize(690, 690)
+
+        # Excel file icon
+        self.xlsIcon = ImageTk.PhotoImage(Image.open('./excel.png').resize((100, 100), Image.ANTIALIAS))
 
         # Menu
         self.menu = Menu(self.master)
@@ -218,21 +225,37 @@ class ReFile(tk.Frame):
     def onEntering(self, event):
         #if event.widget.cget('background') == self.fileBackgroundColour:
         #print('onEntering triggered')
-        event.widget.config(background=self.fileHoverColour)
+        if event.widget.cget('state') != 'DISABLED':
+            event.widget.config(background=self.fileHoverColour)
     
     # Leave event for files
     def onLeaving(self, event):
         #if event.widget.cget('background') == self.fileHoverColour:
         #print('onLeaving triggered')
-        event.widget.config(background=self.fileBackgroundColour)
+        if event.widget.cget('state') != 'DISABLED':
+            event.widget.config(background=self.fileBackgroundColour)
 
     # Mouse hold event for files
     def onPressing(self, event):
-        event.widget.config(background=self.filePressColour)
+        if event.widget.cget('state') != 'DISABLED':
+            event.widget.config(background=self.filePressColour)
 
-    # Mouse release event for files
+    # Mouse release event for highlighting a file when clicked
     def onReleasing(self, event):
-        event.widget.config(background=self.fileHoverColour)
+        if event.widget.cget('state') != 'DISABLED':
+            for widget in self.fileLabelList:
+                if widget.cget('state') == 'DISABLED':
+                    widget.config(background=self.fileBackgroundColour, state='NORMAL')
+
+            self.selectedFile = event.widget.cget('text')
+            self.statusLabel['text'] = os.path.basename(event.widget.cget('text')) + ' selected.'
+            event.widget.config(background='grey', state='DISABLED')
+            print('self.selectedFile:', self.selectedFile)
+
+    # Call two functions when releasing mouse key
+    def releaseHightlight(self, event):
+        self.fileHighlighter(event)
+        self.onReleasing(event)
 
     # Close window event
     def onClosingWindow(self):
@@ -247,9 +270,18 @@ class ReFile(tk.Frame):
         if self.selectedFile == '':
             return
 
+        # Find target widget to remove from file label list
+        targetLabel = None
+        for label in self.fileLabelList:
+            if label.cget('state') == 'DISABLED':
+                targetLabel = label
+
         for frame in self.fileListFrame.winfo_children():
             for widget in frame.winfo_children():
                 if self.selectedFile == widget.cget('text'):
+                    print('Before removing in deleteFiles:', self.fileLabelList)
+                    self.fileLabelList.remove(targetLabel)
+                    print('After removing in deleteFiles:', self.fileLabelList)
                     frame.destroy()
                     self.xlFiles.remove(self.selectedFile)
                     self.statusLabel['text'] = os.path.basename(self.selectedFile) + ' deleted.'
@@ -269,6 +301,9 @@ class ReFile(tk.Frame):
         if self.xlFiles and not messagebox.askyesno('ReFile', 'Do you really want to delete all files?'):
             return
         self.xlFiles.clear()
+        print('Before clearing in clearAllFiles:', self.fileLabelList)
+        self.fileLabelList.clear()
+        print('After clearing in clearAllFiles:', self.fileLabelList)
         for widget in self.fileListFrame.winfo_children():
             widget.destroy()
 
@@ -276,16 +311,18 @@ class ReFile(tk.Frame):
         self.master.update()
         self.fileListFrame.config(width=1)
 
-        tempList = [['Jim', '0.33', 'What', 'Hello'], ['Dave', '0.67', 'is', ''],
-                    ['James', '0.67', 'Tkinter', 'World'], ['Eden', '0.5', '?', '']]
+        tempList = [
+            ['Jim', '0.33', 'What', 'Hello'],
+            ['Dave', '0.67', 'is', ''],
+            ['James', '0.67', 'Tkinter', 'World'],
+            ['Eden', '0.5', '?', '']
+            ]
         # tempList.sort(key=lambda e: e[1], reverse=True)
 
         for i, (name, score, stuff, stuff1) in enumerate(tempList, start=1):
             self.dataBox.insert('', 'end', values=(
                 i, name, score, stuff, stuff1), tags = 'oddrow' if i%2 == 1 else '')
     # End of demo function
-
-
 
     def isFile(self):
         if os.path.isfile('xlList.txt'):
@@ -318,40 +355,22 @@ class ReFile(tk.Frame):
         print('File list:', self.xlFiles)
         for xlFile in self.xlFiles:
             frame = tk.Frame(self.fileListFrame, bg='skyblue')
+            # don't forget to add "Icon made by Pixel perfect from www.flaticon.com" for this project
+            imageLabel = ttk.Label(frame, image=self.xlsIcon, style='File.TLabel')
             label = ttk.Label(frame, text=xlFile, style='File.TLabel')
+            self.fileLabelList.append(label)
             #label.bind('<Button-1>', self.fileHighlighter)
             label.bind('<Enter>', self.onEntering)
             label.bind('<Leave>', self.onLeaving)
             label.bind('<ButtonPress-1>', self.onPressing)
-            label.bind('<ButtonRelease-1>', self.releaseHightlight)
+            label.bind('<ButtonRelease-1>', self.onReleasing)
             #label.bind('<Control-ButtonRelease-1>', self.selectMultiFiles)
             frame.pack(padx=5, pady=5, side=tk.LEFT)
-            label.pack(padx=5, pady=5, side=tk.LEFT, fill=tk.BOTH)
+            imageLabel.pack(padx=5, pady=5)
+            label.pack(padx=5, pady=5, fill=tk.BOTH)
 
         self.master.update()
         self.onFileListFrameResizing()
-
-    # Call two functions when releasing mouse key
-    def releaseHightlight(self, event):
-        self.onReleasing(event)
-        self.fileHighlighter(event)
-
-    # TODO: Fix the problem of how to highlight only one item (on hold)
-    # An event to highlight a file when clicked
-    def fileHighlighter(self, event):
-        '''oldHightlightLabel = ttk.Label()
-        for widget in self.fileFrame.winfo_children():
-            if isinstance(widget, ttk.Label) and widget.cget('text') != 'Files' and widget.cget('background') == self.fileHighlightColour:
-                widget.config(background=self.fileBackgroundColour)
-        print('self:', self)
-        print('old label:', oldHightlightLabel)
-        print('new label:', event.widget)
-        #if event.widget != oldHightlightLabel:
-            #oldHightlightLabel['background'] = self.fileBackgroundColour
-        event.widget.config(background=self.fileHighlightColour)'''
-        self.statusLabel['text'] = os.path.basename(event.widget.cget('text')) + ' selected.'
-        self.selectedFile = event.widget.cget('text')
-        print('self.selectedFile:', self.selectedFile)
 
     def addFile(self, event=None):
         self.openFile.state(['disabled'])
@@ -375,6 +394,7 @@ class ReFile(tk.Frame):
         for widget in self.fileListFrame.winfo_children():
             widget.destroy()
 
+        self.fileLabelList.clear()
         self.openFile.state(['!disabled'])
         self.clearFile.state(['!disabled'])
         self.statusLabel['text'] = 'Complete!'
