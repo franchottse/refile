@@ -11,7 +11,7 @@ class ReFile(tk.Frame):
         self.master = master
         super().__init__()
         #tk.Frame.__init__(self, self.master)
-        self.master.bind('<Delete>', self.deleteFiles)
+        self.master.bind('<Delete>', self.deleteFile)
 
         # Style setup
         self.width = 1200
@@ -124,7 +124,7 @@ class ReFile(tk.Frame):
         # Create a frame for displaying files
         self.fileFrame = ttk.Frame(self.master)
         self.fileLabel = ttk.Label(self.fileFrame, text='Files', style='Tab.TLabel')
-        self.fileListCanvas = tk.Canvas(self.fileFrame, background='white')
+        self.fileListCanvas = tk.Canvas(self.fileFrame, highlightthickness=0, background='white')
         self.fileListFrame = ttk.Frame(self.fileListCanvas)
         self.fileScrollBar = ttk.Scrollbar(self.fileFrame, orient=tk.HORIZONTAL, command=self.fileListCanvas.xview)
         self.fileListCanvas.configure(xscrollcommand=self.fileScrollBar.set)
@@ -223,39 +223,50 @@ class ReFile(tk.Frame):
 
     # Enter event for files
     def onEntering(self, event):
-        #if event.widget.cget('background') == self.fileBackgroundColour:
-        #print('onEntering triggered')
         if event.widget.cget('state') != 'DISABLED':
             event.widget.config(background=self.fileHoverColour)
-    
+            for child in event.widget.winfo_children():
+                child.config(background=self.fileHoverColour)
+
     # Leave event for files
     def onLeaving(self, event):
-        #if event.widget.cget('background') == self.fileHoverColour:
-        #print('onLeaving triggered')
         if event.widget.cget('state') != 'DISABLED':
             event.widget.config(background=self.fileBackgroundColour)
+            for child in event.widget.winfo_children():
+                child.config(background=self.fileBackgroundColour)
 
     # Mouse hold event for files
-    def onPressing(self, event):
-        if event.widget.cget('state') != 'DISABLED':
-            event.widget.config(background=self.filePressColour)
+    def onPressing(self, event, outLabel):
+        if outLabel.cget('state') != 'DISABLED':
+            outLabel.config(background=self.filePressColour)
+            for child in outLabel.winfo_children():
+                child.config(background=self.filePressColour)
 
     # Mouse release event for highlighting a file when clicked
-    def onReleasing(self, event):
-        if event.widget.cget('state') != 'DISABLED':
+    def onReleasing(self, event, outLabel, filename):
+        if outLabel.cget('state') != 'DISABLED':
             for widget in self.fileLabelList:
                 if widget.cget('state') == 'DISABLED':
                     widget.config(background=self.fileBackgroundColour, state='NORMAL')
+                    for child in widget.winfo_children():
+                        child.config(background=self.fileBackgroundColour)
 
-            self.selectedFile = event.widget.cget('text')
-            self.statusLabel['text'] = os.path.basename(event.widget.cget('text')) + ' selected.'
-            event.widget.config(background='grey', state='DISABLED')
-            print('self.selectedFile:', self.selectedFile)
+            print('filename:', filename)
+            self.selectedFile = filename
+            self.statusLabel['text'] = os.path.basename(filename) + ' selected.'
+            outLabel.config(background='grey', state='DISABLED')
+            for child in outLabel.winfo_children():
+                child.config(background='grey')
 
-    # Call two functions when releasing mouse key
-    def releaseHightlight(self, event):
-        self.fileHighlighter(event)
-        self.onReleasing(event)
+    # Mouse double click event for opening a file
+    def onDoubleClicking(self, event, filename):
+        try:
+            self.statusLabel['text'] = 'Opening file: ' + os.path.basename(filename) + '.'
+            os.startfile(filename)
+        except:
+            print('Some error.')
+            tk.messagebox.showerror(title='ReFile', message='Error: the file you are opening may be deleted, unknown or corrupted.')
+            self.statusLabel['text'] = 'Error: the file you are opening may be deleted, unknown or corrupted.'
 
     # Close window event
     def onClosingWindow(self):
@@ -265,28 +276,24 @@ class ReFile(tk.Frame):
         else:
             self.statusLabel['text'] = ''
 
-    # TODO: Create 'delete file(s)' functionality
-    def deleteFiles(self, event=None):
+    def deleteFile(self, event=None):
         if self.selectedFile == '':
             return
 
-        # Find target widget to remove from file label list
-        targetLabel = None
+        # Find target widget and file name to remove from file label list and xlFiles
         for label in self.fileLabelList:
             if label.cget('state') == 'DISABLED':
-                targetLabel = label
+                self.fileLabelList.remove(label)
+                self.xlFiles.remove(self.selectedFile)
 
-        for frame in self.fileListFrame.winfo_children():
-            for widget in frame.winfo_children():
-                if self.selectedFile == widget.cget('text'):
-                    print('Before removing in deleteFiles:', self.fileLabelList)
-                    self.fileLabelList.remove(targetLabel)
-                    print('After removing in deleteFiles:', self.fileLabelList)
-                    frame.destroy()
-                    self.xlFiles.remove(self.selectedFile)
+        # Destroy widget from GUI
+        for outLabel in self.fileListFrame.winfo_children():
+            for widget in outLabel.winfo_children():
+                if isinstance(widget, ttk.Label) and widget.cget('text') == self.selectedFile:
+                    outLabel.destroy()
                     self.statusLabel['text'] = os.path.basename(self.selectedFile) + ' deleted.'
                     self.selectedFile = ''
-                    if not self.xlFiles:
+                    if not self.fileListFrame.winfo_children():
                         self.master.update()
                         self.fileListFrame.config(width=1)
 
@@ -351,23 +358,45 @@ class ReFile(tk.Frame):
         pass
 
     def displayFiles(self):
-        print(self.fileListCanvas.coords(self.fileCanvasFrame))
         print('File list:', self.xlFiles)
         for xlFile in self.xlFiles:
-            frame = tk.Frame(self.fileListFrame, bg='skyblue')
+            label = ttk.Label(self.fileListFrame, style='File.TLabel')
             # don't forget to add "Icon made by Pixel perfect from www.flaticon.com" for this project
-            imageLabel = ttk.Label(frame, image=self.xlsIcon, style='File.TLabel')
-            label = ttk.Label(frame, text=xlFile, style='File.TLabel')
+            imageCanvas = tk.Canvas(label, width=100, height=100, highlightthickness=0)
+            textLabel = ttk.Label(label, text=xlFile, style='File.TLabel')
             self.fileLabelList.append(label)
-            #label.bind('<Button-1>', self.fileHighlighter)
+
+            if xlFile == self.selectedFile:
+                label.config(background='grey', state='DISABLED')
+                for child in label.winfo_children():
+                    child.config(background='grey')
+
+            # Bind label with onEntering
             label.bind('<Enter>', self.onEntering)
+
+            # Bind label with onLeaving
             label.bind('<Leave>', self.onLeaving)
-            label.bind('<ButtonPress-1>', self.onPressing)
-            label.bind('<ButtonRelease-1>', self.onReleasing)
+
+            # Bind label, imageCanvas and textLabel with onPressing
+            label.bind('<ButtonPress-1>', lambda event, outLabel=label: self.onPressing(event, outLabel))
+            imageCanvas.bind('<ButtonPress-1>', lambda event, outLabel=label: self.onPressing(event, outLabel))
+            textLabel.bind('<ButtonPress-1>', lambda event, outLabel=label: self.onPressing(event, outLabel))
+
+            # Bind label, imageCanvas and textLabel with onReleasing
+            label.bind('<ButtonRelease-1>', lambda event, outLabel=label, filename=xlFile: self.onReleasing(event, outLabel, filename))
+            imageCanvas.bind('<ButtonRelease-1>', lambda event, outLabel=label, filename=xlFile: self.onReleasing(event, outLabel, filename))
+            textLabel.bind('<ButtonRelease-1>', lambda event, outLabel=label, filename=xlFile: self.onReleasing(event, outLabel, filename))
+
+            # Bind label, imageCanvas and textLabel with onDoubleClicking
+            label.bind('<Double-Button-1>', lambda event, filename=xlFile: self.onDoubleClicking(event, filename))
+            imageCanvas.bind('<Double-Button-1>', lambda event, filename=xlFile: self.onDoubleClicking(event, filename))
+            textLabel.bind('<Double-Button-1>', lambda event, filename=xlFile: self.onDoubleClicking(event, filename))
+
             #label.bind('<Control-ButtonRelease-1>', self.selectMultiFiles)
-            frame.pack(padx=5, pady=5, side=tk.LEFT)
-            imageLabel.pack(padx=5, pady=5)
-            label.pack(padx=5, pady=5, fill=tk.BOTH)
+            label.pack(padx=5, pady=5, side=tk.LEFT)
+            imageCanvas.pack(padx=5, pady=5)
+            imageCanvas.create_image((0, 0), anchor=tk.N+tk.W, image=self.xlsIcon)
+            textLabel.pack(padx=5, pady=5, fill=tk.BOTH)
 
         self.master.update()
         self.onFileListFrameResizing()

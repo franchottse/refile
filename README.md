@@ -76,7 +76,6 @@ The repo contains two executable files, one is installable, another one is of .E
 ### GUI
 
 - [x] Create the main window
-- [x] Grid three frames for column, data and file
 - [ ] Create column frame
   - [ ] Column names and checkboxes
   - [ ] A scrollbar
@@ -87,8 +86,10 @@ The repo contains two executable files, one is installable, another one is of .E
   - [ ] Add row button
   - [ ] Delete row button
 - [ ] Create file frame
-  - [ ] File icon and name
   - [x] A scrollbar
+  - [x] File icon and name
+  - [x] Files Deletion
+  - [ ] Double-click to open file function
 - [x] Create button frame
   - [x] Open File
   - [x] Clear All File
