@@ -85,16 +85,18 @@ The repo contains two executable files, one is installable, another one is of .E
   - [ ] Pop-up window when double clicking the data (row)
   - [ ] Add row button
   - [ ] Delete row button
-- [ ] Create file frame
+- [x] Create file frame
   - [x] A scrollbar
   - [x] File icon and name
   - [x] Files Deletion
-  - [ ] Double-click to open file function
+  - [x] Double-click to open file function
+  - [x] File name wrapper
 - [x] Create button frame
   - [x] Open File
   - [x] Clear All File
 - [ ] Create right click menu
   - [ ] Delete file
+  - [ ] Properties
 - [ ] Create menu bar
   - [ ] File
   - [ ] About
