@@ -68,50 +68,38 @@ class ReFile(tk.Frame):
         # App title & configuration
         self.master.winfo_toplevel().title('ReFile')
         self.master.geometry('{}x{}+{}+{}'.format(self.width, self.height, self.xPosition, self.yPosition))
-        self.master.configure(bg='skyblue')
+        self.master.configure(bg='skyblue') # colours = skyblue, #B7E7B0, #93E9BE <- recommend
         self.master.minsize(690, 690)
 
+        
+        # Attribution guide: https://wiki.creativecommons.org/wiki/Best_practices_for_attribution#This_is_a_good_attribution_for_material_you_modified_slightly
         # Excel file icon
         self.xlsIcon = ImageTk.PhotoImage(Image.open('./excel.png').resize((100, 100), Image.ANTIALIAS))
+
+        # Word file icon
+        self.wordIcon = ImageTk.PhotoImage(Image.open('./word.png').resize((100, 100), Image.ANTIALIAS))
+
+        # Document file icon
+        self.textIcon = ImageTk.PhotoImage(Image.open('./text.png').resize((100, 100), Image.ANTIALIAS))
+
+        # PDF file icon
+        self.pdfIcon = ImageTk.PhotoImage(Image.open('./pdf.png').resize((100, 100), Image.ANTIALIAS))
 
         # Configure grids
         tk.Grid.rowconfigure(self.master, 0, weight=2)
         tk.Grid.rowconfigure(self.master, 1, weight=1)
         tk.Grid.columnconfigure(self.master, (1, 2), weight=1)
         self.master.grid_columnconfigure(0, minsize=280)
-        self.master.grid_rowconfigure(1, minsize=200)
+        self.master.grid_rowconfigure(1, minsize=230)
 
         # Create frame for displaying data
-        self.dataFrame = ttk.Frame(self.master)
-        #self.dataLabel = tk.Label(self.dataFrame, text='Data', bg='white')
-        self.dataLabel = ttk.Label(self.dataFrame, text='Data', style='Tab.TLabel')
-        self.dataFieldLabel = ttk.Label(self.dataFrame, style='Tab.TLabel')
+        self.contentFrame = ttk.Frame(self.master)
+        #self.contentLabel = tk.Label(self.contentFrame, text='Data', bg='white')
+        self.contentLabel = ttk.Label(self.contentFrame, text='Contents', style='Tab.TLabel')
+        self.contentFieldFrame = ttk.Frame(self.contentFrame)
 
-        # Test tree view
-        cols = ('Position', 'Name', 'Score',
-                'Random Stuff', 'Another Random Stuff')
-        self.dataBox = ttk.Treeview(
-            self.dataFieldLabel, columns=cols, show='headings', selectmode=tk.BROWSE)
-        # set column headings
-        for col in cols:
-            self.dataBox.column(col)
-            self.dataBox.heading(col, text=col)
-
-        self.verticalScrollBar = ttk.Scrollbar(
-            self.dataFrame, orient=tk.VERTICAL, command=self.dataBox.yview)
-
-        self.horizontalScrollBar = ttk.Scrollbar(
-            self.dataFrame, orient=tk.HORIZONTAL, command=self.dataBox.xview)
-
-        self.sizegrip = ttk.Sizegrip(self.dataFrame)
-
-        self.dataBox.configure(xscrollcommand=self.horizontalScrollBar.set,
-                               yscrollcommand=self.verticalScrollBar.set)
-
-        # TODO: Fix showing row colour problem
-        self.dataBox.tag_configure('oddrow', background=self.fileHoverColour)
-
-        # End of test tree view
+        #self.createTreeview()
+        self.createTextBoxes()
 
         # Create a frame for displaying files
         self.fileFrame = ttk.Frame(self.master)
@@ -125,14 +113,14 @@ class ReFile(tk.Frame):
         self.fileListFrame.bind('<Configure>', self.onFileListFrameResizing)
         self.fileListCanvas.bind('<Configure>', self.onFileListCanvasResizing)
 
-        # Bind fileListCanvas with addFile function
+        # Bind fileListCanvas to addFile function
         self.fileListFrame.bind('<Double-ButtonRelease-1>', self.addFile)
         self.fileListCanvas.bind('<Double-ButtonRelease-1>', self.addFile)
 
         # TODO: Add three sections for sheets, columns and showing selected columns only
         # Create a frame for displaying check boxes
         self.checkBoxFrame = ttk.Frame(self.master)
-        self.checkBoxLabel = ttk.Label(self.checkBoxFrame, text='Columns', style='Tab.TLabel')
+        self.checkBoxLabel = ttk.Label(self.checkBoxFrame, text='Options', style='Tab.TLabel')
         self.checkBoxFieldLabel = ttk.Label(self.checkBoxFrame, background='white', style='Tab.TLabel')
 
         # Button configuration
@@ -155,39 +143,23 @@ class ReFile(tk.Frame):
     # Pack and grid everything
     def createWidgets(self):
         # Menu
-        self.menu = Menu(self.master)
-        self.master.config(menu=self.menu)
-
-        self.subMenu = Menu(self.menu, tearoff=False)
-        self.menu.add_cascade(label='File', menu=self.subMenu)
-        self.subMenu.add_command(label='Open File', command=self.addFile)
-        self.subMenu.add_separator()
-        self.subMenu.add_command(label='Exit', command=self.onClosingWindow)
-
-        self.helpMenu = Menu(self.menu, tearoff=False)
-        self.menu.add_cascade(label='Help', menu=self.helpMenu)
-        self.helpMenu.add_command(label='About')
+        self.createMenu()
 
         # Check box, data and file frames
         self.checkBoxFrame.grid(row=0, column=0, padx=10,
                                 pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
-        self.dataFrame.grid(row=0, column=1, columnspan=2, padx=10,
+        self.contentFrame.grid(row=0, column=1, columnspan=2, padx=10,
                             pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
         self.fileFrame.grid(row=1, column=0, columnspan=3, padx=10,
                             pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
 
-        self.dataLabel.pack(padx=5, pady=5, fill=tk.X)
+        self.contentLabel.pack(padx=5, pady=5, fill=tk.X)
         self.fileLabel.pack(padx=5, pady=(5, 0), fill=tk.X)
         self.fileListCanvas.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
         #self.fileScrollBar.pack(padx=5, pady=(0, 5), side=tk.BOTTOM, fill=tk.X)
 
-        # Treeview in data frame
-        self.horizontalScrollBar.pack(side=tk.BOTTOM, fill=tk.X, padx=(0, 17))
-        self.verticalScrollBar.pack(side=tk.RIGHT, fill=tk.Y)
-
-        #self.sizegrip.pack(in_=self.horizontalScrollBar, anchor=tk.S+tk.E)
-        self.dataFieldLabel.pack(padx=5, pady=(0, 5), fill=tk.BOTH, expand=True)
-        self.dataBox.pack(fill=tk.BOTH, expand=True)
+        #self.renderTreeview()
+        self.renderTextBoxes()
 
         self.checkBoxLabel.pack(padx=5, pady=5, fill=tk.X)
         self.checkBoxFieldLabel.pack(padx=5, pady=(0, 5), fill=tk.BOTH, expand=True)
@@ -206,8 +178,56 @@ class ReFile(tk.Frame):
         #tk.Button(self.buttonFrame, text="Show scores", **buttonStyle,command=self.show).grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
         self.clearFile.grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
 
+    # Menu
+    def createMenu(self):
+        self.menu = Menu(self.master)
+        self.master.config(menu=self.menu)
+
+        self.subMenu = Menu(self.menu, tearoff=False)
+        self.menu.add_cascade(label='File', menu=self.subMenu)
+        self.subMenu.add_command(label='Open File', command=self.addFile)
+        self.subMenu.add_separator()
+        self.subMenu.add_command(label='Exit', command=self.onClosingWindow)
+
+        self.helpMenu = Menu(self.menu, tearoff=False)
+        self.menu.add_cascade(label='Help', menu=self.helpMenu)
+        self.helpMenu.add_command(label='About')
+
+    # Text boxes
+    def createTextBoxes(self):
+        # Create scrollbar for both text boxes
+        self.contentVerticalScrollBar = ttk.Scrollbar(self.contentFrame, orient=tk.VERTICAL, command=self.onContentScrolling)
+
+        self.oldTextBox = tk.Text(self.contentFieldFrame, width=50, height=25, font=('Helvetica', 12), selectbackground='#AAFFFF', selectforeground='black', relief=tk.SUNKEN,
+                                  yscrollcommand=self.contentVerticalScrollBar.set)
+        self.newTextBox = tk.Text(self.contentFieldFrame, width=50, height=25, font=('Helvetica', 12), selectbackground='#AAFFFF', selectforeground='black', relief=tk.SUNKEN,
+                                  yscrollcommand=self.contentVerticalScrollBar.set)
+
+        # Bind both text boxes to mouse wheel
+        self.oldTextBox.bind('<MouseWheel>', self.onMouseWheeling) 
+        self.newTextBox.bind('<MouseWheel>', self.onMouseWheeling) 
+
+    # Pack both text boxes
+    def renderTextBoxes(self):
+        self.contentVerticalScrollBar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.contentFieldFrame.pack(padx=5, pady=(0, 5), fill=tk.BOTH, expand=True)
+        self.oldTextBox.pack(padx=(0, 2.5), side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.newTextBox.pack(padx=(2.5, 0), side=tk.LEFT, fill=tk.BOTH, expand=True)
+
     def test_func(self):
         func.test_function()
+
+    # Contents scrollbar function
+    def onContentScrolling(self, *args):
+        self.oldTextBox.yview(*args)
+        self.newTextBox.yview(*args)
+
+    # Mouse wheel event
+    def onMouseWheeling(self, event):
+        self.oldTextBox.yview_scroll(-1*(event.delta//120), tk.UNITS)
+        self.newTextBox.yview_scroll(-1*(event.delta//120), tk.UNITS)
+        return 'break'
 
     # Make sure the scrollbar works for the file list frame
     def onFileListFrameResizing(self, event=None):
@@ -263,8 +283,8 @@ class ReFile(tk.Frame):
             outLabel.config(background=self.fileHoverHightlightColour, state='DISABLED')
             for child in outLabel.winfo_children():
                 child.config(background=self.fileHoverHightlightColour)
-        
-        # self.displayData()
+
+        # Call function from func.py
 
     # Mouse double click event for opening a file
     def onDoubleClicking(self, event, filename):
@@ -314,27 +334,12 @@ class ReFile(tk.Frame):
                 print('File list:', self.xlFiles)
         self.statusLabel['text'] = 'Welcome to ReFile! Please double click the file area or click Select File to add files.'
 
-    # TODO: Display data from a file when clicked
-    def displayData(self):
-        # Make the file list frame resize when deleting files
-        self.master.update()
-        self.fileListFrame.config(width=1)
-
-        tempList = [
-            ['Jim', '0.33', 'What', 'Hello'],
-            ['Dave', '0.67', 'is', ''],
-            ['James', '0.67', 'Tkinter', 'World'],
-            ['Eden', '0.5', '?', '']
-            ]
-        # tempList.sort(key=lambda e: e[1], reverse=True)
-
-        for i, (name, score, stuff, stuff1) in enumerate(tempList, start=1):
-            self.dataBox.insert('', 'end', values=(
-                i, name, score, stuff, stuff1), tags = 'oddrow' if i%2 == 1 else '')
-        # End of demo function
-
     # TODO: Display check boxes from a file when clicked
     def displayCheckBoxes(self):
+        pass
+
+    # TODO: Display the contents from the files in text boxes
+    def displayContents(self):
         pass
 
     def displayFiles(self):
@@ -351,37 +356,47 @@ class ReFile(tk.Frame):
                 for child in label.winfo_children():
                     child.config(background=self.fileHighlightColour)
 
-            # Bind label with onEntering
+            # Bind label to onEntering
             label.bind('<Enter>', self.onEntering)
             label.bind('<FocusIn>', self.onEntering)
 
-            # Bind label with onLeaving
+            # Bind label to onLeaving
             label.bind('<Leave>', self.onLeaving)
             label.bind('<FocusOut>', self.onLeaving)
 
-            # Bind label, imageCanvas and textLabel with onPressing
+            # Bind label, imageCanvas and textLabel to onPressing
             label.bind('<ButtonPress-1>', lambda event, outLabel=label: self.onPressing(event, outLabel))
             imageCanvas.bind('<ButtonPress-1>', lambda event, outLabel=label: self.onPressing(event, outLabel))
             textLabel.bind('<ButtonPress-1>', lambda event, outLabel=label: self.onPressing(event, outLabel))
 
-            # Bind label, imageCanvas and textLabel with onReleasing
+            # Bind label, imageCanvas and textLabel to onReleasing
             label.bind('<ButtonRelease-1>', lambda event, outLabel=label, filename=xlFile: self.onReleasing(event, outLabel, filename))
             label.bind('<Return>', lambda event, outLabel=label, filename=xlFile: self.onReleasing(event, outLabel, filename))
             imageCanvas.bind('<ButtonRelease-1>', lambda event, outLabel=label, filename=xlFile: self.onReleasing(event, outLabel, filename))
             textLabel.bind('<ButtonRelease-1>', lambda event, outLabel=label, filename=xlFile: self.onReleasing(event, outLabel, filename))
 
-            # Bind label, imageCanvas and textLabel with onDoubleClicking
+            # Bind label, imageCanvas and textLabel to onDoubleClicking
             label.bind('<Double-Button-1>', lambda event, filename=xlFile: self.onDoubleClicking(event, filename))
             label.bind('<Control-Return>', lambda event, filename=xlFile: self.onDoubleClicking(event, filename))
             imageCanvas.bind('<Double-Button-1>', lambda event, filename=xlFile: self.onDoubleClicking(event, filename))
             textLabel.bind('<Double-Button-1>', lambda event, filename=xlFile: self.onDoubleClicking(event, filename))
 
             #label.bind('<Control-ButtonRelease-1>', self.selectMultiFiles)
+
+            img = ''
+            if xlFile.lower().endswith(('.doc', '.docx')):
+                img = self.wordIcon
+            elif xlFile.lower().endswith('.pdf'):
+                img = self.pdfIcon
+            else:
+                img = self.textIcon
+
             label.pack(padx=30, side=tk.LEFT)
             imageCanvas.pack(padx=25, pady=(10, 5))
-            imageCanvas.create_image((0, 0), anchor=tk.N+tk.W, image=self.xlsIcon)
+            imageCanvas.create_image((0, 0), anchor=tk.N+tk.W, image=img)
             textLabel.pack(padx=5, pady=5)
 
+        # Make sure the widgets in file list frame are center
         self.master.update()
         self.onFileListFrameResizing()
 
@@ -413,7 +428,12 @@ class ReFile(tk.Frame):
         self.clearFile.state(['disabled'])
         self.statusLabel['text'] = 'Selecting files'
         files = filedialog.askopenfilenames(initialdir='/', title='Select File',
-                                            filetypes=[('Excel Files', '.xlsx')])
+                                            filetypes=[
+                                                ('All Files', '.doc .docx .txt .pdf'),
+                                                ('Word Documents', '.doc .docx'),
+                                                ('Text Documents', '.txt'),
+                                                ('Adobe PDF', '.pdf')
+                                                ])
 
         for file in files:
             if file not in self.xlFiles and file != '':
@@ -446,6 +466,9 @@ class ReFile(tk.Frame):
         for widget in self.fileListFrame.winfo_children():
             widget.destroy()
 
+        self.master.update()
+        self.fileListFrame.config(width=1)
+
     # TODO: Solve the problem of passing arguments to other python files for Excel files
 
 if __name__ == '__main__':
@@ -453,7 +476,6 @@ if __name__ == '__main__':
     mainApp = ReFile(root)
     mainApp.test_func()
     root.protocol('WM_DELETE_WINDOW', mainApp.onClosingWindow)
-    #mainApp.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
     root.mainloop()
 
     with open('xlList.txt', 'w') as f:

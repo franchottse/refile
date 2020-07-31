@@ -76,21 +76,26 @@ The repo contains two executable files, one is installable, another one is of .E
 ### GUI
 
 -   [x] Create the main window
--   [ ] Create ~~column~~ option frame (may remove that later on)
+-   [ ] Create option frame
     -   [ ] Options and checkboxes
         -   [ ] Bold
         -   [ ] Italic
         -   [ ] Underline
         -   [ ] Highlight
-    -   [ ] A scrollbar
--   [ ] Create ~~data~~ contents frame
-    -   [x] ~~Treeview~~
-    -   [x] Two scrollbars
-    -   [ ] Two text boxes
+        -   [ ] Left text box
+        -   [ ] Right text box
+        -   [ ] Change highlight words style only
+    -   [ ] scrollbar
+-   [ ] Create content frame
+    -   [x] Scrollbar
+    -   [x] Two text boxes
     -   [ ] Pop-up window when clicking merge files button the data
+        -   [ ] Text box
+        -   [ ] Label
+        -   [ ] Buttons
+            -   [ ] Save Output
+            -   [ ] Cancel
     -   [ ] Lines highlighting if possible
-    -   [ ] ~~Add row button~~
-    -   [ ] ~~Delete row button~~
 -   [x] Create file frame
     -   [x] A scrollbar
     -   [x] File icon and name
@@ -99,7 +104,7 @@ The repo contains two executable files, one is installable, another one is of .E
     -   [x] File name wrapper
 -   [x] Create button frame
     -   [x] Open File
-    -   [ ] Merge (or Compare) Files
+    -   [ ] Merge Files
     -   [ ] Clear Contents (may add)
     -   [x] Clear All Files
 -   [ ] Create right click menu
@@ -118,16 +123,13 @@ The repo contains two executable files, one is installable, another one is of .E
 ### Back-end
 
 -   [ ] Make sure the files can be read
--   [ ] Fetch data from ~~Excel~~ Word, PDF or text files
--   [ ] Read ~~colums, sheets~~ texts from ~~Excel~~ Word, PDF or text files
--   [ ] Put ~~colums, sheets~~ texts and data to the GUI
--   [ ] Spot the differences in two files
+-   [ ] Fetch data from Word, text or PDF files
+-   [ ] Read text from Word, text or PDF files
+-   [ ] Put text to the GUI
+-   [ ] Show the differences from two files
 -   [ ] Display the output on a pop-up window
--   [ ] Bind two functions: "Save" and "Save As" for saving output data
--   [ ] Bind functions for deleting one~~, a few~~ or all files
--   [ ] ~~Bind a function when deleting files for unsaved files~~
--   [ ] ~~Bind a function when closing window for unsaved data~~
--   [ ] ~~Bind a function with adding and deleting rows~~
+-   [ ] Bind two functions: "Save Output" for saving output text
+-   [ ] Bind functions for deleting one or all files
 
 <a name="convertion" />
 
@@ -136,6 +138,8 @@ The repo contains two executable files, one is installable, another one is of .E
 -   [ ] Convert whole app into one installable file
 -   [ ] Convert whole app into a .EXE file
 
+<!-- LICENSE -->
+
 <a name="license" />
 
 ## License
@@ -143,3 +147,13 @@ The repo contains two executable files, one is installable, another one is of .E
 Distributed under the MIT License. See `LICENSE` for more information.
 
 MIT © [Frankie Tse]()
+
+<!-- ATTRIBUTION -->
+
+<a name="attribution" />
+
+## Attribution
+
+-   "[Docs, google, word icon](https://www.iconfinder.com/icons/97957/docs_google_word_icon)" by [Dakirby309](https://www.deviantart.com/dakirby309), used under [CC BY](https://creativecommons.org/licenses/by-nc/3.0/) / Resized from original
+-   "[Documents icon](https://www.iconfinder.com/icons/99038/documents_icon)" by [Dakirby309](https://www.deviantart.com/dakirby309)
+-   "[Acrobat, adobe, reader icon](https://www.iconfinder.com/icons/99074/acrobat_adobe_reader_icon)" by [Dakirby309](https://www.deviantart.com/dakirby309)
