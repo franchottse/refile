@@ -78,13 +78,13 @@ The repo contains two executable files, one is installable, another one is of .E
 -   [x] Create the main window
 -   [ ] Create option frame
     -   [ ] Options and checkboxes
-        -   [ ] Bold
-        -   [ ] Italic
         -   [ ] Underline
+        -   [ ] Strikethrough
         -   [ ] Highlight
         -   [ ] Left text box
         -   [ ] Right text box
         -   [ ] Change highlight words style only
+        -   [ ] Show/Hide ¶
     -   [ ] scrollbar
 -   [ ] Create content frame
     -   [x] Scrollbar
@@ -104,7 +104,7 @@ The repo contains two executable files, one is installable, another one is of .E
     -   [x] File name wrapper
 -   [x] Create button frame
     -   [x] Open File
-    -   [ ] Merge Files
+    -   [ ] Merge (Diff) Text
     -   [ ] Clear Contents (may add)
     -   [x] Clear All Files
 -   [ ] Create right click menu
