@@ -83,7 +83,7 @@ The repo contains two executable files, one is installable, another one is of .E
         -   [ ] Highlight
         -   [ ] Left text box
         -   [ ] Right text box
-        -   [ ] Change highlight words style only
+        -   [ ] Change highlighted words style only
         -   [ ] Show/Hide ¶
     -   [ ] scrollbar
 -   [ ] Create content frame
