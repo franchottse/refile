@@ -78,13 +78,14 @@ The repo contains two executable files, one is installable, another one is of .E
 -   [x] Create the main window
 -   [ ] Create option frame
     -   [ ] Options and checkboxes
-        -   [ ] Underline
-        -   [ ] Strikethrough
-        -   [ ] Highlight
-        -   [ ] Left text box
-        -   [ ] Right text box
-        -   [ ] Change highlighted words style only
-        -   [ ] Show/Hide ¶
+        -   [ ] Text Box
+            -   [ ] Left Text Box
+            -   [ ] Right Text Box
+        -   [ ] Style
+            -   [ ] Underline Insertion
+            -   [ ] Strikethrough Deletion
+            -   [ ] Highlight Difference (or Insertion/Deletion)
+            -   [ ] Show/Hide ¶
     -   [ ] scrollbar
 -   [ ] Create content frame
     -   [x] Scrollbar
@@ -115,7 +116,10 @@ The repo contains two executable files, one is installable, another one is of .E
         -   [ ] Open files
         -   [ ] Exit
     -   [ ] Font
-    -   [ ] About
+        -   [ ] Word Wrap
+        -   [ ] Font Size
+        -   [ ] Clear Style
+    -   [ ] About ReFile
 -   [x] Create status bar frame
 
 <a name="back-end" />
