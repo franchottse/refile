@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, Text, messagebox, ttk, Menu
 from PIL import Image, ImageTk
+from diff_match_patch import diff_match_patch
 import os
 import func
 
@@ -59,8 +60,17 @@ class ReFile(tk.Frame):
         self.selectedFile = ''
         self.selectedMultiFiles = []
 
-        # Test variable to save the file label
+        # Variable to save the file label
         self.fileLabelList = []
+
+        # Variables to check the buttons states
+        self.underlineOnOff = False
+        self.strikethroughOnOff = False
+        self.highlightOnOff = False
+        self.paragraphMarkOnOff = False
+
+        # Variable to store the selection of the text box
+        self.selectedTextBox = 'old'
 
         # App setup
         self.configureGUI()
@@ -74,6 +84,7 @@ class ReFile(tk.Frame):
     def configureGUI(self):
         # App title & configuration
         self.master.winfo_toplevel().title('ReFile')
+        self.master.iconbitmap('./refile-icon.ico')
         self.master.geometry(
             '{}x{}+{}+{}'.format(self.width, self.height, self.xPosition, self.yPosition))
         # colours = skyblue, #B7E7B0, #93E9BE, #FFEAAA <- recommend
@@ -81,9 +92,6 @@ class ReFile(tk.Frame):
         self.master.minsize(690, 690)
 
         # Attribution guide: https://wiki.creativecommons.org/wiki/Best_practices_for_attribution#This_is_a_good_attribution_for_material_you_modified_slightly
-        # Excel file icon
-        self.xlsIcon = ImageTk.PhotoImage(Image.open(
-            './excel.png').resize((100, 100), Image.ANTIALIAS))
 
         # Word file icon
         self.wordIcon = ImageTk.PhotoImage(Image.open(
@@ -96,6 +104,20 @@ class ReFile(tk.Frame):
         # PDF file icon
         self.pdfIcon = ImageTk.PhotoImage(Image.open(
             './pdf.png').resize((100, 100), Image.ANTIALIAS))
+
+        # Unchecked radio button image
+        self.uncheckedRadioImg = ImageTk.PhotoImage(
+            Image.open('./unchecked-radio-button.png').resize((24, 24), Image.ANTIALIAS))
+
+        # Checked radio button image
+        self.checkedRadioImg = ImageTk.PhotoImage(
+            Image.open('./checked-radio-button.png').resize((24, 24), Image.ANTIALIAS))
+
+        # Toggle off button image
+        self.toggleOffImg = ImageTk.PhotoImage(Image.open('./toggle-off.png'))
+
+        # Toggle on button image
+        self.toggleOnImg = ImageTk.PhotoImage(Image.open('./toggle-on.png'))
 
         # Configure grids
         tk.Grid.rowconfigure(self.master, 0, weight=2)
@@ -111,7 +133,7 @@ class ReFile(tk.Frame):
             self.contentFrame, text='Contents', style='Tab.TLabel')
         self.contentFieldFrame = ttk.Frame(self.contentFrame)
 
-        # self.createTreeview()
+        # Create text boxes
         self.createTextBoxes()
 
         # Create a frame for displaying files
@@ -134,13 +156,15 @@ class ReFile(tk.Frame):
         self.fileListFrame.bind('<Double-ButtonRelease-1>', self.addFile)
         self.fileListCanvas.bind('<Double-ButtonRelease-1>', self.addFile)
 
-        # TODO: Add three sections for sheets, columns and showing selected columns only
         # Create a frame for displaying check boxes
-        self.checkBoxFrame = ttk.Frame(self.master)
-        self.checkBoxLabel = ttk.Label(
-            self.checkBoxFrame, text='Options', style='Tab.TLabel')
-        self.checkBoxFieldLabel = ttk.Label(
-            self.checkBoxFrame, background='white', style='Tab.TLabel')
+        self.optionFrame = ttk.Frame(self.master)
+        self.optionLabel = ttk.Label(
+            self.optionFrame, text='Options', style='Tab.TLabel')
+        self.optionFieldLabel = ttk.Label(
+            self.optionFrame, background='white', style='Tab.TLabel')
+
+        # Create option buttons
+        self.createOptions()
 
         # Button configuration
         # buttonStyle = {'padx': '10', 'pady': '5', 'fg': 'black', 'bg': 'white', 'activebackground': '#F5E7D7', 'activeforeground': 'black', 'bd': '2'}
@@ -166,25 +190,25 @@ class ReFile(tk.Frame):
         # Menu
         self.createMenu()
 
-        # Check box, data and file frames
-        self.checkBoxFrame.grid(row=0, column=0, padx=10,
-                                pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
+        # Option, data and file frames
+        self.optionFrame.grid(row=0, column=0, padx=10,
+                              pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
         self.contentFrame.grid(row=0, column=1, columnspan=2, padx=10,
                                pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
         self.fileFrame.grid(row=1, column=0, columnspan=3, padx=10,
                             pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
 
+        # Contents
         self.contentLabel.pack(padx=5, pady=5, fill=tk.X)
-        self.fileLabel.pack(padx=5, pady=(5, 0), fill=tk.X)
-        self.fileListCanvas.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
-        #self.fileScrollBar.pack(padx=5, pady=(0, 5), side=tk.BOTTOM, fill=tk.X)
-
-        # self.renderTreeview()
         self.renderTextBoxes()
 
-        self.checkBoxLabel.pack(padx=5, pady=5, fill=tk.X)
-        self.checkBoxFieldLabel.pack(
+        self.fileLabel.pack(padx=5, pady=(5, 0), fill=tk.X)
+        self.fileListCanvas.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
+
+        self.optionLabel.pack(padx=5, pady=5, fill=tk.X)
+        self.optionFieldLabel.pack(
             padx=5, pady=(0, 5), fill=tk.BOTH, expand=True)
+        self.renderOptions()
 
         # Button frame
         self.buttonFrame.grid(row=2, column=0, padx=10, pady=5, sticky=tk.W)
@@ -242,6 +266,199 @@ class ReFile(tk.Frame):
                              fill=tk.BOTH, expand=True)
         self.newTextBox.pack(padx=(2.5, 0), side=tk.LEFT,
                              fill=tk.BOTH, expand=True)
+
+    # Options
+    def createOptions(self):
+        # Text box label
+        self.textBoxLabel = ttk.Label(
+            self.optionFieldLabel, text='Text Box', style='Tab.TLabel')
+        self.textBoxLabel.config(relief=tk.FLAT)
+
+        # Left text box radio buttons
+        self.leftRadioTextBox = tk.Label(
+            self.optionFieldLabel, bg='white', cursor='hand2', padx=0, pady=0)
+        self.leftRadioButton = tk.Label(
+            self.leftRadioTextBox, bg='white', image=self.checkedRadioImg, cursor='hand2', padx=0, pady=0)
+        self.leftRadioText = tk.Label(
+            self.leftRadioTextBox, bg='white', text='Left Text Box', cursor='hand2', padx=0, pady=0)
+
+        self.leftRadioTextBox.bind(
+            '<Button-1>', lambda event, option='left': self.selectTextBox(option))
+        self.leftRadioButton.bind(
+            '<Button-1>', lambda event, option='left': self.selectTextBox(option))
+        self.leftRadioText.bind(
+            '<Button-1>', lambda event, option='left': self.selectTextBox(option))
+
+        # Right text box radio buttons
+        self.rightRadioTextBox = tk.Label(
+            self.optionFieldLabel, bg='white', cursor='hand2', padx=0, pady=0)
+        self.rightRadioButton = tk.Label(
+            self.rightRadioTextBox, bg='white', image=self.uncheckedRadioImg, cursor='hand2', padx=0, pady=0)
+        self.rightRadioText = tk.Label(
+            self.rightRadioTextBox, bg='white', text='Right Text Box', cursor='hand2', padx=0, pady=0)
+
+        self.rightRadioTextBox.bind(
+            '<Button-1>', lambda event, option='right': self.selectTextBox(option))
+        self.rightRadioButton.bind(
+            '<Button-1>', lambda event, option='right': self.selectTextBox(option))
+        self.rightRadioText.bind(
+            '<Button-1>', lambda event, option='right': self.selectTextBox(option))
+
+        # Text style label
+        self.textStyleLabel = ttk.Label(
+            self.optionFieldLabel, text='Text Style', style='Tab.TLabel')
+        self.textStyleLabel.config(relief=tk.FLAT)
+
+        # Underline insertion option
+        self.underlineOption = tk.Label(
+            self.optionFieldLabel, bg='white', cursor='hand2', padx=0, pady=0)
+        self.underlineCheckBox = tk.Label(
+            self.underlineOption, bg='white', image=self.toggleOffImg, cursor='hand2', padx=0, pady=0)
+        self.underlineText = tk.Label(
+            self.underlineOption, bg='white', text='Underline Insertion', cursor='hand2', padx=0, pady=0)
+
+        self.underlineOption.bind('<Button-1>', self.underlineInsertion)
+        self.underlineCheckBox.bind('<Button-1>', self.underlineInsertion)
+        self.underlineText.bind('<Button-1>', self.underlineInsertion)
+
+        # Strikethrough deletion option
+        self.strikethroughOption = tk.Label(
+            self.optionFieldLabel, bg='white', cursor='hand2', padx=0, pady=0)
+        self.strikethroughCheckBox = tk.Label(
+            self.strikethroughOption, bg='white', image=self.toggleOffImg, cursor='hand2', padx=0, pady=0)
+        self.strikethroughText = tk.Label(
+            self.strikethroughOption, bg='white', text='Strikethrough Deletion', cursor='hand2', padx=0, pady=0)
+
+        self.strikethroughOption.bind(
+            '<Button-1>', self.strikethroughDeleteion)
+        self.strikethroughCheckBox.bind(
+            '<Button-1>', self.strikethroughDeleteion)
+        self.strikethroughText.bind('<Button-1>', self.strikethroughDeleteion)
+
+        # Highlight insertion/deletion option
+        self.highlightOption = tk.Label(
+            self.optionFieldLabel, bg='white', cursor='hand2', padx=0, pady=0)
+        self.highlightCheckBox = tk.Label(
+            self.highlightOption, bg='white', image=self.toggleOffImg, cursor='hand2', padx=0, pady=0)
+        self.highlightText = tk.Label(
+            self.highlightOption, bg='white', text='Highlight Insertion/Deletion', cursor='hand2', padx=0, pady=0)
+
+        self.highlightOption.bind('<Button-1>', self.highlightDifferece)
+        self.highlightCheckBox.bind('<Button-1>', self.highlightDifferece)
+        self.highlightText.bind('<Button-1>', self.highlightDifferece)
+
+        # Show/Hide ¶ option
+        self.paragraphMarkOption = tk.Label(
+            self.optionFieldLabel, bg='white', cursor='hand2', padx=0, pady=0)
+        self.paragraphMarkCheckBox = tk.Label(
+            self.paragraphMarkOption, bg='white', image=self.toggleOffImg, cursor='hand2', padx=0, pady=0)
+        self.paragraphMarkText = tk.Label(
+            self.paragraphMarkOption, bg='white', text='Show/Hide ¶', cursor='hand2', padx=0, pady=0)
+
+        self.paragraphMarkOption.bind('<Button-1>', self.paragraphMark)
+        self.paragraphMarkCheckBox.bind('<Button-1>', self.paragraphMark)
+        self.paragraphMarkText.bind('<Button-1>', self.paragraphMark)
+
+    # Pack options
+    def renderOptions(self):
+        # Text box
+        self.textBoxLabel.grid(row=0, column=0, columnspan=2,
+                               padx=5, pady=(12, 10), sticky=tk.W)
+
+        self.leftRadioTextBox.grid(row=1, column=0, padx=(11, 6), pady=0)
+        self.leftRadioButton.pack(side=tk.LEFT)
+        self.leftRadioText.pack(side=tk.LEFT)
+
+        self.rightRadioTextBox.grid(row=1, column=1, padx=(6, 11), pady=0)
+        self.rightRadioButton.pack(side=tk.LEFT)
+        self.rightRadioText.pack(side=tk.LEFT)
+
+        # Text style
+        self.textStyleLabel.grid(
+            row=2, column=0, columnspan=2, padx=5, pady=(35, 10), sticky=tk.W)
+
+        # Underline insertion
+        self.underlineOption.grid(
+            row=3, column=0, padx=(30, 5), pady=(0, 5), columnspan=2, sticky=tk.W)
+        self.underlineCheckBox.pack(side=tk.LEFT)
+        self.underlineText.pack(padx=(3, 0), side=tk.LEFT)
+
+        # Strikethrough deletion
+        self.strikethroughOption.grid(
+            row=4, column=0, padx=(30, 5), pady=(0, 5), columnspan=2, sticky=tk.W)
+        self.strikethroughCheckBox.pack(side=tk.LEFT)
+        self.strikethroughText.pack(padx=(3, 0), side=tk.LEFT)
+
+        # Highlight Insertion/Deletion
+        self.highlightOption.grid(
+            row=5, column=0, padx=(30, 5), pady=(0, 5), columnspan=2, sticky=tk.W)
+        self.highlightCheckBox.pack(side=tk.LEFT)
+        self.highlightText.pack(padx=(3, 0), side=tk.LEFT)
+
+        # Show/Hide ¶
+        self.paragraphMarkOption.grid(
+            row=6, column=0, padx=(30, 5), pady=0, columnspan=2, sticky=tk.W)
+        self.paragraphMarkCheckBox.pack(side=tk.LEFT)
+        self.paragraphMarkText.pack(padx=(3, 0), side=tk.LEFT)
+
+    # Text box selection
+    def selectTextBox(self, option):
+        if option == 'left' and self.selectedTextBox != 'old':
+            self.selectedTextBox = 'old'
+            self.leftRadioButton.config(image=self.checkedRadioImg)
+            self.rightRadioButton.config(image=self.uncheckedRadioImg)
+        elif option == 'right' and self.selectedTextBox != 'new':
+            self.selectedTextBox = 'new'
+            self.leftRadioButton.config(image=self.uncheckedRadioImg)
+            self.rightRadioButton.config(image=self.checkedRadioImg)
+
+    # Underline insertion
+    def underlineInsertion(self, event):
+        pass
+
+    # Strikethrough deletion
+    def strikethroughDeleteion(self, event):
+        pass
+
+    # Highlight insertion/deletion
+    def highlightDifferece(self, event):
+        self.highlightOnOff = not self.highlightOnOff
+        pass
+
+    # Show/Hide ¶
+    def paragraphMark(self, event):
+        self.paragraphMarkOnOff = not self.paragraphMarkOnOff
+        self.paragraphMarkCheckBox.config(
+            image=self.toggleOnImg) if self.paragraphMarkOnOff else self.paragraphMarkCheckBox.config(image=self.toggleOffImg)
+
+        oldText = self.oldTextBox.get(1.0, tk.END)[:-1].replace('¶', '')
+        newText = self.newTextBox.get(1.0, tk.END)[:-1].replace('¶', '')
+
+        dmp = diff_match_patch()
+        diffs = dmp.diff_main(oldText, newText)
+        dmp.diff_cleanupSemantic(diffs)
+
+        self.oldTextBox.config(state='normal')
+        self.newTextBox.config(state='normal')
+        self.oldTextBox.delete(1.0, tk.END)
+        self.newTextBox.delete(1.0, tk.END)
+        for action, word in diffs:
+            for char in word:
+                if action == -1:
+                    if char == '\n' and self.paragraphMarkOnOff:
+                        self.oldTextBox.insert(tk.END, '¶', '-1')
+                    self.oldTextBox.insert(
+                        tk.END, char, '-1' if char != '\n' else '0')
+                elif action == 1:
+                    if char == '\n' and self.paragraphMarkOnOff:
+                        self.newTextBox.insert(tk.END, '¶', '1')
+                    self.newTextBox.insert(
+                        tk.END, char, '1' if char != '\n' else '0')
+                else:
+                    self.oldTextBox.insert(tk.END, char)
+                    self.newTextBox.insert(tk.END, char)
+        self.oldTextBox.config(state='disabled')
+        self.newTextBox.config(state='disabled')
 
     # TODO: Try to add text wrapping feature (need adding horizontal scrollbar for both text boxes)
 
@@ -375,10 +592,6 @@ class ReFile(tk.Frame):
                 self.xlFiles = [x for x in tempFiles if x.strip()]
                 print('File list:', self.xlFiles)
         self.statusLabel['text'] = 'Welcome to ReFile! Please double click the file area or click Select File to add files.'
-
-    # TODO: Display check boxes from a file when clicked
-    def displayCheckBoxes(self):
-        pass
 
     # TODO: Display the contents from the files in text boxes
     def displayContents(self):

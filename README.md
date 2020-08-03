@@ -104,31 +104,34 @@ The repo contains two executable files, one is installable, another one is of .E
     -   [x] Double-click to open file function
     -   [x] File name wrapper
 -   [x] Create button frame
-    -   [x] Open File
+    -   [x] ~~Open File~~
     -   [ ] Merge (Diff) Text
     -   [ ] Clear Contents (may add)
-    -   [x] Clear All Files
+    -   [x] ~~Clear All Files~~
 -   [ ] Create right click menu
     -   [ ] Delete file
     -   [ ] Properties
 -   [ ] Create menu bar
     -   [ ] File
-        -   [ ] Open files
+        -   [x] Open files
+        -   [ ] Clear all files
         -   [ ] Exit
     -   [ ] Font
         -   [ ] Word Wrap
         -   [ ] Font Size
         -   [ ] Clear Style
-    -   [ ] About ReFile
+    -   [ ] Help
+        -   [ ] How to use
+        -   [ ] About ReFile
 -   [x] Create status bar frame
 
 <a name="back-end" />
 
 ### Back-end
 
--   [ ] Make sure the files can be read
--   [ ] Fetch data from Word, text or PDF files
--   [ ] Read text from Word, text or PDF files
+-   [x] Make sure the files can be read
+-   [x] Fetch data from Word, text or PDF files
+-   [x] Read text from Word, text or PDF files
 -   [ ] Put text to the GUI
 -   [ ] Show the differences from two files
 -   [ ] Display the output on a pop-up window
@@ -161,3 +164,9 @@ MIT © [Frankie Tse]()
 -   "[Docs, google, word icon](https://www.iconfinder.com/icons/97957/docs_google_word_icon)" by [Dakirby309](https://www.deviantart.com/dakirby309), used under [CC BY](https://creativecommons.org/licenses/by-nc/3.0/) / Resized from original
 -   "[Documents icon](https://www.iconfinder.com/icons/99038/documents_icon)" by [Dakirby309](https://www.deviantart.com/dakirby309)
 -   "[Acrobat, adobe, reader icon](https://www.iconfinder.com/icons/99074/acrobat_adobe_reader_icon)" by [Dakirby309](https://www.deviantart.com/dakirby309)
+-   "[Button PNG](http://pngimg.com/download/31565)" by [pngimg.com](http://pngimg.com/), used under [CC BY](https://creativecommons.org/licenses/by-nc/4.0/) / Resized from original
+-   [Toggle On icon](https://icons8.com/icons/set/toggle-on) icon by [Icons8](https://icons8.com)
+-   [Toggle Off icon](https://icons8.com/icons/set/toggle-off) icon by [Icons8](https://icons8.com)
+-   [Unchecked Radio Button icon](https://icons8.com/icons/set/unchecked-radio-button) icon by [Icons8](https://icons8.com)
+-   [Checked Radio Button icon](https://icons8.com/icons/set/checked-radio-button) icon by [Icons8](https://icons8.com)
+-   [Compare icon](https://icons8.com/icons/set/compare) icon by [Icons8](https://icons8.com)
