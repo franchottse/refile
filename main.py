@@ -72,6 +72,12 @@ class ReFile(tk.Frame):
         # Variable to store the selection of the text box
         self.selectedTextBox = 'old'
 
+        # Variable to store the patch of two text boxes
+        self.diffs = None
+
+        # Variable to store the number of differences
+        self.numDiff = 0
+
         # App setup
         self.configureGUI()
         self.createWidgets()
@@ -120,7 +126,7 @@ class ReFile(tk.Frame):
         self.toggleOnImg = ImageTk.PhotoImage(Image.open('./toggle-on.png'))
 
         # Configure grids
-        tk.Grid.rowconfigure(self.master, 0, weight=2)
+        tk.Grid.rowconfigure(self.master, 0, weight=1)
         tk.Grid.rowconfigure(self.master, 1, weight=1)
         tk.Grid.columnconfigure(self.master, (1, 2), weight=1)
         self.master.grid_columnconfigure(0, minsize=280)
@@ -172,13 +178,13 @@ class ReFile(tk.Frame):
 
         # Select File button
         self.openFile = ttk.Button(
-            self.buttonFrame, text='Select File', style='Wild.TButton', command=self.addFile)
+            self.buttonFrame, text='Merge Text', style='Wild.TButton', command=self.addFile)
         self.openFile.bind('<Return>', self.addFile)
 
         # Clear File button
-        self.clearFile = ttk.Button(
-            self.buttonFrame, text='Clear All Files', style='Wild.TButton', command=self.clearAllFiles)
-        self.clearFile.bind('<Return>', self.clearAllFiles)
+        self.clearContent = ttk.Button(
+            self.buttonFrame, text='Clear Contents', style='Wild.TButton', command=self.clearAllContents)
+        self.clearContent.bind('<Return>', self.clearAllContents)
 
         # Reference frames
         self.statusFrame = ttk.Frame(self.master)
@@ -223,23 +229,36 @@ class ReFile(tk.Frame):
 
         # Clear files button
         #tk.Button(self.buttonFrame, text="Show scores", **buttonStyle,command=self.show).grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
-        self.clearFile.grid(row=0, column=1, padx=5, pady=5,
-                            sticky=tk.N+tk.S+tk.E+tk.W)
+        self.clearContent.grid(row=0, column=1, padx=5, pady=5,
+                               sticky=tk.N+tk.S+tk.E+tk.W)
 
     # Menu
     def createMenu(self):
         self.menu = Menu(self.master)
         self.master.config(menu=self.menu)
 
-        self.subMenu = Menu(self.menu, tearoff=False)
-        self.menu.add_cascade(label='File', menu=self.subMenu)
-        self.subMenu.add_command(label='Open File', command=self.addFile)
-        self.subMenu.add_separator()
-        self.subMenu.add_command(label='Exit', command=self.onClosingWindow)
+        # File
+        self.fileMenu = Menu(self.menu, tearoff=False)
+        self.menu.add_cascade(label='File', menu=self.fileMenu)
+        self.fileMenu.add_command(label='Open', command=self.addFile)
+        self.fileMenu.add_command(
+            label='Clear All', command=self.clearAllFiles)
+        self.fileMenu.add_separator()
+        self.fileMenu.add_command(label='Exit', command=self.onClosingWindow)
 
+        # Format
+        self.formatMenu = Menu(self.menu, tearoff=False)
+        self.menu.add_cascade(label='Format', menu=self.formatMenu)
+        self.formatMenu.add_command(label='Word Wrap')
+        self.formatMenu.add_command(label='Font Size')
+        self.formatMenu.add_command(label='Clear Style')
+
+        # Help
         self.helpMenu = Menu(self.menu, tearoff=False)
         self.menu.add_cascade(label='Help', menu=self.helpMenu)
-        self.helpMenu.add_command(label='About')
+        self.helpMenu.add_command(label='How to Use')
+        self.helpMenu.add_separator()
+        self.helpMenu.add_command(label='About ReFile')
 
     # Text boxes
     def createTextBoxes(self):
@@ -247,10 +266,17 @@ class ReFile(tk.Frame):
         self.contentVerticalScrollBar = ttk.Scrollbar(
             self.contentFrame, orient=tk.VERTICAL, command=self.onContentScrolling)
 
-        self.oldTextBox = tk.Text(self.contentFieldFrame, width=50, height=25, font=('Helvetica', 12), selectbackground='#AAFFFF', selectforeground='black', relief=tk.SUNKEN,
-                                  yscrollcommand=self.contentVerticalScrollBar.set)
-        self.newTextBox = tk.Text(self.contentFieldFrame, width=50, height=25, font=('Helvetica', 12), selectbackground='#AAFFFF', selectforeground='black', relief=tk.SUNKEN,
-                                  yscrollcommand=self.contentVerticalScrollBar.set)
+        self.oldTextBox = tk.Text(self.contentFieldFrame, width=50, height=25, font=('Helvetica', 12), selectbackground='#FFFFAA',
+                                  selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollBar.set)
+        self.newTextBox = tk.Text(self.contentFieldFrame, width=50, height=25, font=('Helvetica', 12), selectbackground='#FFFFAA',
+                                  selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollBar.set)
+
+        self.oldTextBox.tag_config(
+            '-1', underline=False, overstrike=False, background='SystemWindow')
+        self.newTextBox.tag_config(
+            '1', underline=False, overstrike=False, background='SystemWindow')
+        self.oldTextBox.bind('<1>', lambda event: self.oldTextBox.focus_set())
+        self.newTextBox.bind('<1>', lambda event: self.newTextBox.focus_set())
 
         # Bind both text boxes to mouse wheel
         self.oldTextBox.bind('<MouseWheel>', self.onMouseWheeling)
@@ -407,23 +433,45 @@ class ReFile(tk.Frame):
             self.selectedTextBox = 'old'
             self.leftRadioButton.config(image=self.checkedRadioImg)
             self.rightRadioButton.config(image=self.uncheckedRadioImg)
+            self.statusLabel['text'] = 'Left text box selected.'
         elif option == 'right' and self.selectedTextBox != 'new':
             self.selectedTextBox = 'new'
             self.leftRadioButton.config(image=self.uncheckedRadioImg)
             self.rightRadioButton.config(image=self.checkedRadioImg)
+            self.statusLabel['text'] = 'Right text box selected.'
 
     # Underline insertion
     def underlineInsertion(self, event):
-        pass
+        self.underlineOnOff = not self.underlineOnOff
+        self.underlineCheckBox.config(
+            image=self.toggleOnImg) if self.underlineOnOff else self.underlineCheckBox.config(image=self.toggleOffImg)
+        self.newTextBox.tag_config('1', underline=self.underlineOnOff)
+
+        on_off = 'on' if self.underlineOnOff else 'off'
+        self.statusLabel['text'] = 'Underline insertion ' + on_off + '.'
 
     # Strikethrough deletion
     def strikethroughDeleteion(self, event):
-        pass
+        self.strikethroughOnOff = not self.strikethroughOnOff
+        self.strikethroughCheckBox.config(
+            image=self.toggleOnImg) if self.strikethroughOnOff else self.strikethroughCheckBox.config(image=self.toggleOffImg)
+        self.oldTextBox.tag_config('-1', overstrike=self.strikethroughOnOff)
+
+        on_off = 'on' if self.strikethroughOnOff else 'off'
+        self.statusLabel['text'] = 'Strikethrough deletion ' + on_off + '.'
 
     # Highlight insertion/deletion
     def highlightDifferece(self, event):
         self.highlightOnOff = not self.highlightOnOff
-        pass
+        self.highlightCheckBox.config(
+            image=self.toggleOnImg) if self.highlightOnOff else self.highlightCheckBox.config(image=self.toggleOffImg)
+        self.oldTextBox.tag_config('-1', background='#FFAAAA' if self.highlightOnOff else 'SystemWindow',
+                                   selectbackground='#FFAAAA' if self.highlightOnOff else '#FFFFAA')
+        self.newTextBox.tag_config('1', background='#AAFFAA' if self.highlightOnOff else 'SystemWindow',
+                                   selectbackground='#AAFFAA' if self.highlightOnOff else '#FFFFAA')
+
+        on_off = 'on' if self.highlightOnOff else 'off'
+        self.statusLabel['text'] = 'Highlight insertion/deletion ' + on_off + '.'
 
     # Show/Hide ¶
     def paragraphMark(self, event):
@@ -431,41 +479,23 @@ class ReFile(tk.Frame):
         self.paragraphMarkCheckBox.config(
             image=self.toggleOnImg) if self.paragraphMarkOnOff else self.paragraphMarkCheckBox.config(image=self.toggleOffImg)
 
-        oldText = self.oldTextBox.get(1.0, tk.END)[:-1].replace('¶', '')
-        newText = self.newTextBox.get(1.0, tk.END)[:-1].replace('¶', '')
+        on_off = 'on' if self.paragraphMarkOnOff else 'off'
+        self.statusLabel['text'] = 'Paragraph mark ' + on_off + '.'
 
-        dmp = diff_match_patch()
-        diffs = dmp.diff_main(oldText, newText)
-        dmp.diff_cleanupSemantic(diffs)
+        if self.diffs == None:
+            return
 
-        self.oldTextBox.config(state='normal')
-        self.newTextBox.config(state='normal')
-        self.oldTextBox.delete(1.0, tk.END)
-        self.newTextBox.delete(1.0, tk.END)
-        for action, word in diffs:
-            for char in word:
-                if action == -1:
-                    if char == '\n' and self.paragraphMarkOnOff:
-                        self.oldTextBox.insert(tk.END, '¶', '-1')
-                    self.oldTextBox.insert(
-                        tk.END, char, '-1' if char != '\n' else '0')
-                elif action == 1:
-                    if char == '\n' and self.paragraphMarkOnOff:
-                        self.newTextBox.insert(tk.END, '¶', '1')
-                    self.newTextBox.insert(
-                        tk.END, char, '1' if char != '\n' else '0')
-                else:
-                    self.oldTextBox.insert(tk.END, char)
-                    self.newTextBox.insert(tk.END, char)
-        self.oldTextBox.config(state='disabled')
-        self.newTextBox.config(state='disabled')
+        state = ('\n', '¶\n') if self.paragraphMarkOnOff else ('¶\n', '\n')
+        self.diffs = [(action, word.replace(*state))
+                      for action, word in self.diffs]
+
+        self.modifyTextBoxes()
 
     # TODO: Try to add text wrapping feature (need adding horizontal scrollbar for both text boxes)
 
     def test_func(self):
         func.test_function()
 
-    # TODO: Try to understand the logic
     # Contents scrollbar function
     def onContentScrolling(self, *args):
         self.oldTextBox.yview(*args)
@@ -540,7 +570,7 @@ class ReFile(tk.Frame):
             for child in outLabel.winfo_children():
                 child.config(background=self.fileHoverHightlightColour)
 
-        # Call function from func.py
+        self.displayContents()
 
     # Mouse double click event for opening a file
     def onDoubleClicking(self, event, filename):
@@ -595,7 +625,83 @@ class ReFile(tk.Frame):
 
     # TODO: Display the contents from the files in text boxes
     def displayContents(self):
-        pass
+        if self.selectedFile == '':
+            return
+
+        txt = func.readFile(self.selectedFile)
+        if txt == '':
+            tk.messagebox.showerror(
+                title='Error', message='The selected file is empty or does not exist.')
+            return
+
+        oldText = txt if self.selectedTextBox == 'old' else self.oldTextBox.get(1.0, tk.END)[
+            :-1].replace('¶', '')
+        newText = txt if self.selectedTextBox == 'new' else self.newTextBox.get(1.0, tk.END)[
+            :-1].replace('¶', '')
+
+        dmp = diff_match_patch()
+        self.diffs = dmp.diff_main(oldText, newText)
+        dmp.diff_cleanupSemantic(self.diffs)
+
+        # Keep or remove underline insertion
+        self.newTextBox.tag_config('1', underline=self.underlineOnOff)
+
+        # Keep or remove strikethrough deletion
+        self.oldTextBox.tag_config('-1', overstrike=self.strikethroughOnOff)
+
+        # Keep or remove highlight difference
+        self.oldTextBox.tag_config('-1', background='#FFAAAA' if self.highlightOnOff else 'SystemWindow',
+                                   selectbackground='#FFAAAA' if self.highlightOnOff else '#FFFFAA')
+        self.newTextBox.tag_config('1', background='#AAFFAA' if self.highlightOnOff else 'SystemWindow',
+                                   selectbackground='#AAFFAA' if self.highlightOnOff else '#FFFFAA')
+
+        # Keep or remove paragraph mark
+        state = ('\n', '¶\n') if self.paragraphMarkOnOff else ('¶\n', '\n')
+        self.diffs = [(action, word.replace(*state))
+                      for action, word in self.diffs]
+
+        self.modifyTextBoxes()
+        self.numHighlight()
+
+    # Clear all contents
+    def clearAllContents(self):
+        self.oldTextBox.config(state=tk.NORMAL)
+        self.newTextBox.config(state=tk.NORMAL)
+        self.oldTextBox.delete(1.0, tk.END)
+        self.newTextBox.delete(1.0, tk.END)
+        self.oldTextBox.config(state=tk.DISABLED)
+        self.newTextBox.config(state=tk.DISABLED)
+        self.diffs = None
+        self.numDiff = 0
+
+    # Modify both text boxes
+    def modifyTextBoxes(self):
+        self.oldTextBox.config(state=tk.NORMAL)
+        self.newTextBox.config(state=tk.NORMAL)
+
+        self.oldTextBox.delete(1.0, tk.END)
+        self.newTextBox.delete(1.0, tk.END)
+
+        for action, word in self.diffs:
+            for char in word:
+                if action == -1:
+                    self.oldTextBox.insert(
+                        tk.END, char, '-1' if char != '\n' else '0')
+                elif action == 1:
+                    self.newTextBox.insert(
+                        tk.END, char, '1' if char != '\n' else '0')
+                else:
+                    self.oldTextBox.insert(tk.END, char)
+                    self.newTextBox.insert(tk.END, char)
+
+        self.oldTextBox.config(state=tk.DISABLED)
+        self.newTextBox.config(state=tk.DISABLED)
+
+    def numHighlight(self):
+        self.numDiff = 0
+        for action, _ in self.diffs:
+            self.numDiff += 1 if action != 0 else 0
+        self.statusLabel['text'] = 'No. of Hightlights: ' + str(self.numDiff)
 
     def displayFiles(self):
         print('File list:', self.xlFiles)
@@ -696,7 +802,7 @@ class ReFile(tk.Frame):
 
     def addFile(self, event=None):
         self.openFile.state(['disabled'])
-        self.clearFile.state(['disabled'])
+        self.clearContent.state(['disabled'])
         self.statusLabel['text'] = 'Selecting files'
         files = filedialog.askopenfilenames(initialdir='/', title='Select File',
                                             filetypes=[
@@ -724,7 +830,7 @@ class ReFile(tk.Frame):
 
         self.fileLabelList.clear()
         self.openFile.state(['!disabled'])
-        self.clearFile.state(['!disabled'])
+        self.clearContent.state(['!disabled'])
         self.statusLabel['text'] = 'Complete!'
         self.displayFiles()
 
@@ -741,7 +847,7 @@ class ReFile(tk.Frame):
         self.master.update()
         self.fileListFrame.config(width=1)
 
-    # TODO: Solve the problem of passing arguments to other python files for Excel files
+    # TODO: Solve the problem of passing arguments to other python files for text files
 
 
 if __name__ == '__main__':

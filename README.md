@@ -76,19 +76,18 @@ The repo contains two executable files, one is installable, another one is of .E
 ### GUI
 
 -   [x] Create the main window
--   [ ] Create option frame
-    -   [ ] Options and checkboxes
-        -   [ ] Text Box
-            -   [ ] Left Text Box
-            -   [ ] Right Text Box
-        -   [ ] Style
-            -   [ ] Underline Insertion
-            -   [ ] Strikethrough Deletion
-            -   [ ] Highlight Difference (or Insertion/Deletion)
-            -   [ ] Show/Hide ¶
-    -   [ ] scrollbar
+-   [x] Create option frame
+    -   [x] Options and checkboxes
+        -   [x] Text Box
+            -   [x] Left Text Box
+            -   [x] Right Text Box
+        -   [x] Style
+            -   [x] Underline Insertion
+            -   [x] Strikethrough Deletion
+            -   [x] Highlight Insertion/Deletion
+            -   [x] Show/Hide ¶
 -   [ ] Create content frame
-    -   [x] Scrollbar
+    -   [ ] Scrollbars
     -   [x] Two text boxes
     -   [ ] Pop-up window when clicking merge files button the data
         -   [ ] Text box
@@ -96,7 +95,6 @@ The repo contains two executable files, one is installable, another one is of .E
         -   [ ] Buttons
             -   [ ] Save Output
             -   [ ] Cancel
-    -   [ ] Lines highlighting if possible
 -   [x] Create file frame
     -   [x] A scrollbar
     -   [x] File icon and name
@@ -106,23 +104,23 @@ The repo contains two executable files, one is installable, another one is of .E
 -   [x] Create button frame
     -   [x] ~~Open File~~
     -   [ ] Merge (Diff) Text
-    -   [ ] Clear Contents (may add)
+    -   [ ] Clear Contents
     -   [x] ~~Clear All Files~~
 -   [ ] Create right click menu
     -   [ ] Delete file
     -   [ ] Properties
 -   [ ] Create menu bar
     -   [ ] File
-        -   [x] Open files
-        -   [ ] Clear all files
-        -   [ ] Exit
-    -   [ ] Font
-        -   [ ] Word Wrap
-        -   [ ] Font Size
-        -   [ ] Clear Style
+        -   [x] Open
+        -   [x] Clear All
+        -   [x] Exit
+    -   [ ] Format
+        -   [x] Word Wrap
+        -   [x] Font Size
+        -   [x] Clear Style
     -   [ ] Help
-        -   [ ] How to use
-        -   [ ] About ReFile
+        -   [x] How to use
+        -   [x] About ReFile
 -   [x] Create status bar frame
 
 <a name="back-end" />
@@ -135,8 +133,10 @@ The repo contains two executable files, one is installable, another one is of .E
 -   [ ] Put text to the GUI
 -   [ ] Show the differences from two files
 -   [ ] Display the output on a pop-up window
+-   [ ] Bind functions for all four options
 -   [ ] Bind two functions: "Save Output" for saving output text
 -   [ ] Bind functions for deleting one or all files
+-   [ ] Bind functions to all menu options
 
 <a name="convertion" />
 
