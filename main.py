@@ -178,8 +178,8 @@ class ReFile(tk.Frame):
 
         # Select File button
         self.openFile = ttk.Button(
-            self.buttonFrame, text='Merge Text', style='Wild.TButton', command=self.addFile)
-        self.openFile.bind('<Return>', self.addFile)
+            self.buttonFrame, text='Merge Text', style='Wild.TButton', command=self.mergePopup)
+        self.openFile.bind('<Return>', self.mergePopup)
 
         # Clear File button
         self.clearContent = ttk.Button(
@@ -266,9 +266,9 @@ class ReFile(tk.Frame):
         self.contentVerticalScrollBar = ttk.Scrollbar(
             self.contentFrame, orient=tk.VERTICAL, command=self.onContentScrolling)
 
-        self.oldTextBox = tk.Text(self.contentFieldFrame, width=50, height=25, font=('Helvetica', 12), selectbackground='#FFFFAA',
+        self.oldTextBox = tk.Text(self.contentFieldFrame, width=1, font=('Helvetica', 12), selectbackground='#FFFFAA',
                                   selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollBar.set)
-        self.newTextBox = tk.Text(self.contentFieldFrame, width=50, height=25, font=('Helvetica', 12), selectbackground='#FFFFAA',
+        self.newTextBox = tk.Text(self.contentFieldFrame, width=1, font=('Helvetica', 12), selectbackground='#FFFFAA',
                                   selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollBar.set)
 
         self.oldTextBox.tag_config(
@@ -623,7 +623,7 @@ class ReFile(tk.Frame):
                 print('File list:', self.xlFiles)
         self.statusLabel['text'] = 'Welcome to ReFile! Please double click the file area or click Select File to add files.'
 
-    # TODO: Display the contents from the files in text boxes
+    # Display contents
     def displayContents(self):
         if self.selectedFile == '':
             return
@@ -674,6 +674,55 @@ class ReFile(tk.Frame):
         self.diffs = None
         self.numDiff = 0
 
+    # Merge result pop-up window
+    def mergePopup(self):
+        self.mergeWindow = tk.Toplevel(self.master)
+
+        mergeWidth = 600
+        mergeHeight = 350
+        xMergePosition = (self.master.winfo_screenwidth()//2)-(mergeWidth//2)
+        yMergePosition = (self.master.winfo_screenheight()//2)-(mergeHeight//2)
+        self.mergeWindow.geometry(
+            '{}x{}+{}+{}'.format(mergeWidth, mergeHeight, xMergePosition, yMergePosition))
+        self.mergeWindow.configure(bg='#FFEAAA')
+        self.mergeWindow.minsize(345, 345)
+
+        tk.Grid.columnconfigure(self.mergeWindow, (0, 1), weight=1)
+        tk.Grid.rowconfigure(self.mergeWindow, (0, 1, 2), weight=1)
+
+        # Prevent interacting with root window
+        self.mergeWindow.grab_set()
+
+        # Merge text box
+        self.mergeTextBox = tk.Text(self.mergeWindow, width=1, font=(
+            'Helvetica', 12), selectbackground='#FFFFAA', selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD, state='disabled')
+        self.mergeTextBox.grid(
+            row=0, column=0, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
+
+        # Vertical scrollbar
+        self.mergeVerticalScrollBar = ttk.Scrollbar(
+            self.mergeWindow, orient=tk.VERTICAL, command=self.mergeTextBox.yview)
+        self.mergeVerticalScrollBar.grid(
+            row=0, column=1, sticky=tk.N+tk.S+tk.E+tk.W)
+        self.mergeTextBox.configure(
+            yscrollcommand=self.mergeVerticalScrollBar.set)
+
+        # Result label
+        self.mergeResult = ttk.Label(
+            self.mergeWindow, text='No. of Highlights: '+str(self.numDiff), style='Tab.TLabel')
+        self.mergeResult.grid(row=1, column=0, columnspan=2,
+                              padx=5, pady=5, sticky=tk.W)
+
+        # Save output button
+        self.saveButton = ttk.Button(
+            self.mergeWindow, text='Save Output', style='Wild.TButton', command=None)
+        self.saveButton.grid(row=2, column=0, padx=5, pady=5, sticky=tk.W)
+
+        # Cancel button
+        self.cancelButton = ttk.Button(
+            self.mergeWindow, text='Cancel', style='Wild.TButton', command=self.mergeWindow.destroy)
+        self.cancelButton.grid(row=2, column=1, padx=5, pady=5, sticky=tk.E)
+
     # Modify both text boxes
     def modifyTextBoxes(self):
         self.oldTextBox.config(state=tk.NORMAL)
@@ -701,7 +750,7 @@ class ReFile(tk.Frame):
         self.numDiff = 0
         for action, _ in self.diffs:
             self.numDiff += 1 if action != 0 else 0
-        self.statusLabel['text'] = 'No. of Hightlights: ' + str(self.numDiff)
+        #self.statusLabel['text'] = 'No. of Hightlights: ' + str(self.numDiff)
 
     def displayFiles(self):
         print('File list:', self.xlFiles)

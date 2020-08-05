@@ -34,10 +34,9 @@ The reason for creating this Python app is for my friends, they work at a compan
 
 With the following features:
 
--   Users can add multiple ~~Excel~~ files 🙎‍♂️🙎‍♀️🗂
+-   Users can add multiple files 🙎‍♂️🙎‍♀️🗂
 -   Users can view different files by selecting files 🙎‍♂️🙎‍♀️🗃
--   Users can view selected columns only 🙎‍♂️🙎‍♀️📋
--   Users can edit data within the app 🙎‍♂️🙎‍♀️📝
+-   Users can enable/disable differences from two selected files 🙎‍♂️🙎‍♀️📋
 
 <!-- '![example-app](example-app.gif)' need removing the quotes -->
 
@@ -48,13 +47,13 @@ With the following features:
 ## Objectives
 
 -   [ ] 🎨 Create the GUI
--   [ ] 📝 Create two fields for <del>columns, </del>contents and files
+-   [ ] 📝 Create two fields for contents and files
 -   [ ] 📑 Let user add files to the file field
 -   [ ] 📖 Compare the differences in two files
--   [ ] 🗃 Save the added file names for the next time use
+-   [ ] 🗃 Save the added files for the next time use
 -   [ ] 🙈 Show/Hide text difference
 -   [ ] 📋 Show a pop-up window for output data
--   [ ] 💾 Save the output data to <del>existing or </del>new ~~Excel~~ Word, PDF or text files
+-   [ ] 💾 Save the output data to new Word, PDF ~~or text~~ files
 -   [ ] 🚀 Convert the whole app into an installable or a .EXE file
 
 <!-- INSTALLATION -->
@@ -104,7 +103,7 @@ The repo contains two executable files, one is installable, another one is of .E
 -   [x] Create button frame
     -   [x] ~~Open File~~
     -   [ ] Merge (Diff) Text
-    -   [ ] Clear Contents
+    -   [x] Clear Contents
     -   [x] ~~Clear All Files~~
 -   [ ] Create right click menu
     -   [ ] Delete file
