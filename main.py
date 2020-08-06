@@ -234,6 +234,7 @@ class ReFile(tk.Frame):
 
     # Menu
     def createMenu(self):
+        # Create menu
         self.menu = Menu(self.master)
         self.master.config(menu=self.menu)
 
@@ -272,9 +273,9 @@ class ReFile(tk.Frame):
                                   selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollBar.set)
 
         self.oldTextBox.tag_config(
-            '-1', underline=False, overstrike=False, background='SystemWindow')
+            '-1', overstrike=False, background='SystemWindow')
         self.newTextBox.tag_config(
-            '1', underline=False, overstrike=False, background='SystemWindow')
+            '1', underline=False, background='SystemWindow')
         self.oldTextBox.bind('<1>', lambda event: self.oldTextBox.focus_set())
         self.newTextBox.bind('<1>', lambda event: self.newTextBox.focus_set())
 
@@ -677,51 +678,88 @@ class ReFile(tk.Frame):
     # Merge result pop-up window
     def mergePopup(self):
         self.mergeWindow = tk.Toplevel(self.master)
+        self.mergeWindow.protocol(
+            "WM_DELETE_WINDOW", self.onMergeWindowDestroying)
+
+        self.openFile.state(['disabled'])
+        self.clearContent.state(['disabled'])
 
         mergeWidth = 600
         mergeHeight = 350
-        xMergePosition = (self.master.winfo_screenwidth()//2)-(mergeWidth//2)
-        yMergePosition = (self.master.winfo_screenheight()//2)-(mergeHeight//2)
+        xMergePosition = (
+            self.mergeWindow.winfo_screenwidth()//2)-(mergeWidth//2)
+        yMergePosition = (
+            self.mergeWindow.winfo_screenheight()//2)-(mergeHeight//2)
+        self.mergeWindow.iconbitmap('./refile-icon.ico')
         self.mergeWindow.geometry(
             '{}x{}+{}+{}'.format(mergeWidth, mergeHeight, xMergePosition, yMergePosition))
         self.mergeWindow.configure(bg='#FFEAAA')
-        self.mergeWindow.minsize(345, 345)
+        self.mergeWindow.minsize(680, 380)
 
-        tk.Grid.columnconfigure(self.mergeWindow, (0, 1), weight=1)
-        tk.Grid.rowconfigure(self.mergeWindow, (0, 1, 2), weight=1)
+        self.mergeFrame = ttk.Frame(self.mergeWindow)
+        self.mergeFrame.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
 
         # Prevent interacting with root window
         self.mergeWindow.grab_set()
 
         # Merge text box
-        self.mergeTextBox = tk.Text(self.mergeWindow, width=1, font=(
+        self.mergeTextBox = tk.Text(self.mergeFrame, width=70, height=12, font=(
             'Helvetica', 12), selectbackground='#FFFFAA', selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD, state='disabled')
-        self.mergeTextBox.grid(
-            row=0, column=0, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
+        self.mergeTextBox.tag_config('-1', overstrike=self.strikethroughOnOff, background='#FFAAAA' if self.highlightOnOff else 'SystemWindow',
+                                     selectbackground='#FFAAAA' if self.highlightOnOff else '#FFFFAA')
+        self.mergeTextBox.tag_config('1', underline=self.underlineOnOff, background='#AAFFAA' if self.highlightOnOff else 'SystemWindow',
+                                     selectbackground='#AAFFAA' if self.highlightOnOff else '#FFFFAA')
+        self.mergeText()
+        self.mergeTextBox.pack(padx=(5, 0), pady=5,
+                               side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Vertical scrollbar
         self.mergeVerticalScrollBar = ttk.Scrollbar(
-            self.mergeWindow, orient=tk.VERTICAL, command=self.mergeTextBox.yview)
-        self.mergeVerticalScrollBar.grid(
-            row=0, column=1, sticky=tk.N+tk.S+tk.E+tk.W)
+            self.mergeFrame, orient=tk.VERTICAL, command=self.mergeTextBox.yview)
         self.mergeTextBox.configure(
             yscrollcommand=self.mergeVerticalScrollBar.set)
+        self.mergeVerticalScrollBar.pack(
+            padx=(0, 5), side=tk.RIGHT, pady=5, fill=tk.Y)
+
+        self.mergeResultButtonFrame = tk.Frame(self.mergeWindow, bg='#FFEAAA')
+        self.mergeResultButtonFrame.pack(
+            padx=5, pady=(0, 5), fill=tk.X)
 
         # Result label
         self.mergeResult = ttk.Label(
-            self.mergeWindow, text='No. of Highlights: '+str(self.numDiff), style='Tab.TLabel')
-        self.mergeResult.grid(row=1, column=0, columnspan=2,
-                              padx=5, pady=5, sticky=tk.W)
-
-        # Save output button
-        self.saveButton = ttk.Button(
-            self.mergeWindow, text='Save Output', style='Wild.TButton', command=None)
-        self.saveButton.grid(row=2, column=0, padx=5, pady=5, sticky=tk.W)
+            self.mergeResultButtonFrame, text='No. of Highlights: '+str(self.numDiff), style='Tab.TLabel')
+        self.mergeResult.pack(padx=5, pady=5, side=tk.LEFT)
 
         # Cancel button
         self.cancelButton = ttk.Button(
-            self.mergeWindow, text='Cancel', style='Wild.TButton', command=self.mergeWindow.destroy)
-        self.cancelButton.grid(row=2, column=1, padx=5, pady=5, sticky=tk.E)
+            self.mergeResultButtonFrame, text='Cancel', style='Wild.TButton', command=self.onMergeWindowDestroying)
+        self.cancelButton.pack(padx=(0, 5), pady=5, side=tk.RIGHT)
+
+        # Save output button
+        self.saveButton = ttk.Button(
+            self.mergeResultButtonFrame, text='Save Output', style='Wild.TButton', command=None)
+        self.saveButton.pack(padx=5, pady=5, side=tk.RIGHT)
+
+    # Merge text
+    def mergeText(self):
+        if not self.diffs:
+            return
+
+        self.mergeTextBox.config(state=tk.NORMAL)
+        self.mergeTextBox.delete(1.0, tk.END)
+
+        for action, word in self.diffs:
+            for char in word:
+                self.mergeTextBox.insert(tk.END, char, str(
+                    action) if char != '\n' else '0')
+
+        self.mergeTextBox.config(state=tk.DISABLED)
+
+    # Enable buttons from root when closing merge window
+    def onMergeWindowDestroying(self, event=None):
+        self.mergeWindow.destroy()
+        self.openFile.state(['!disabled'])
+        self.clearContent.state(['!disabled'])
 
     # Modify both text boxes
     def modifyTextBoxes(self):

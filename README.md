@@ -89,11 +89,14 @@ The repo contains two executable files, one is installable, another one is of .E
     -   [ ] Scrollbars
     -   [x] Two text boxes
     -   [ ] Pop-up window when clicking merge files button the data
-        -   [ ] Text box
-        -   [ ] Label
-        -   [ ] Buttons
-            -   [ ] Save Output
-            -   [ ] Cancel
+        -   [ ] Text box scrollbar frame
+            -   [x] Text box
+            -   [ ] Scrollbars
+        -   [ ] Merge text result and button frame
+            -   [x] Result label
+            -   [x] Buttons
+                -   [ ] Save Output
+                -   [x] Cancel
 -   [x] Create file frame
     -   [x] A scrollbar
     -   [x] File icon and name
