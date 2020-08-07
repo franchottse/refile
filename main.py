@@ -174,7 +174,7 @@ class ReFile(tk.Frame):
 
         # Button configuration
         # buttonStyle = {'padx': '10', 'pady': '5', 'fg': 'black', 'bg': 'white', 'activebackground': '#F5E7D7', 'activeforeground': 'black', 'bd': '2'}
-        self.buttonFrame = tk.Frame(self.master, bg='#B5ACA8')
+        self.buttonFrame = tk.Frame(self.master, bg='#FFEAAA')
 
         # Select File button
         self.openFile = ttk.Button(
@@ -676,10 +676,11 @@ class ReFile(tk.Frame):
         self.numDiff = 0
 
     # Merge result pop-up window
-    def mergePopup(self):
+    def mergePopup(self, event=None):
         self.mergeWindow = tk.Toplevel(self.master)
         self.mergeWindow.protocol(
             "WM_DELETE_WINDOW", self.onMergeWindowDestroying)
+        self.mergeWindow.bind('<Escape>', self.onMergeWindowDestroying)
 
         self.openFile.state(['disabled'])
         self.clearContent.state(['disabled'])
@@ -701,6 +702,9 @@ class ReFile(tk.Frame):
 
         # Prevent interacting with root window
         self.mergeWindow.grab_set()
+
+        # Get the focus on merge window
+        self.mergeWindow.focus_set()
 
         # Merge text box
         self.mergeTextBox = tk.Text(self.mergeFrame, width=70, height=12, font=(
@@ -737,7 +741,7 @@ class ReFile(tk.Frame):
 
         # Save output button
         self.saveButton = ttk.Button(
-            self.mergeResultButtonFrame, text='Save Output', style='Wild.TButton', command=None)
+            self.mergeResultButtonFrame, text='Save Output', style='Wild.TButton', command=lambda: func.exportFile(self.mergeTextBox))
         self.saveButton.pack(padx=5, pady=5, side=tk.RIGHT)
 
     # Merge text
@@ -911,7 +915,6 @@ class ReFile(tk.Frame):
                     'ReFile', 'There is at least a file added before.')
                 self.addFile()
                 break
-
         for widget in self.fileListFrame.winfo_children():
             widget.destroy()
 
