@@ -486,9 +486,9 @@ class ReFile(tk.Frame):
         if self.diffs == None:
             return
 
-        state = ('\n', '¶\n') if self.paragraphMarkOnOff else ('¶\n', '\n')
-        self.diffs = [(action, word.replace(*state))
-                      for action, word in self.diffs]
+        rep = ('\n', '¶\n') if self.paragraphMarkOnOff else ('¶\n', '\n')
+        self.diffs = [(action, text.replace(*rep))
+                      for action, text in self.diffs]
 
         self.modifyTextBoxes()
 
@@ -617,7 +617,7 @@ class ReFile(tk.Frame):
     def loadSavedList(self):
         self.statusLabel['text'] = 'Loading previous saved list'
         if os.path.isfile('xlList.txt'):
-            with open('xlList.txt', 'r') as f:
+            with open('xlList.txt', 'r', encoding='utf-8') as f:
                 tempFiles = f.read()
                 tempFiles = tempFiles.split('\n')
                 self.xlFiles = [x for x in tempFiles if x.strip()]
@@ -629,7 +629,7 @@ class ReFile(tk.Frame):
         if self.selectedFile == '':
             return
 
-        txt = func.readFile(self.selectedFile)
+        txt = func.importFile(self.selectedFile)
         if txt == '':
             tk.messagebox.showerror(
                 title='Error', message='The selected file is empty or does not exist.')
@@ -657,9 +657,9 @@ class ReFile(tk.Frame):
                                    selectbackground='#AAFFAA' if self.highlightOnOff else '#FFFFAA')
 
         # Keep or remove paragraph mark
-        state = ('\n', '¶\n') if self.paragraphMarkOnOff else ('¶\n', '\n')
-        self.diffs = [(action, word.replace(*state))
-                      for action, word in self.diffs]
+        rep = ('\n', '¶\n') if self.paragraphMarkOnOff else ('¶\n', '\n')
+        self.diffs = [(action, text.replace(*rep))
+                      for action, text in self.diffs]
 
         self.modifyTextBoxes()
         self.numHighlight()
@@ -741,7 +741,7 @@ class ReFile(tk.Frame):
 
         # Save output button
         self.saveButton = ttk.Button(
-            self.mergeResultButtonFrame, text='Save Output', style='Wild.TButton', command=lambda: func.exportFile(self.mergeTextBox))
+            self.mergeResultButtonFrame, text='Save Output', style='Wild.TButton', command=lambda: func.exportFile(self.diffs, self.underlineOnOff, self.strikethroughOnOff, self.highlightOnOff, self.paragraphMarkOnOff))
         self.saveButton.pack(padx=5, pady=5, side=tk.RIGHT)
 
     # Merge text
@@ -752,8 +752,8 @@ class ReFile(tk.Frame):
         self.mergeTextBox.config(state=tk.NORMAL)
         self.mergeTextBox.delete(1.0, tk.END)
 
-        for action, word in self.diffs:
-            for char in word:
+        for action, text in self.diffs:
+            for char in text:
                 self.mergeTextBox.insert(tk.END, char, str(
                     action) if char != '\n' else '0')
 
@@ -773,8 +773,8 @@ class ReFile(tk.Frame):
         self.oldTextBox.delete(1.0, tk.END)
         self.newTextBox.delete(1.0, tk.END)
 
-        for action, word in self.diffs:
-            for char in word:
+        for action, text in self.diffs:
+            for char in text:
                 if action == -1:
                     self.oldTextBox.insert(
                         tk.END, char, '-1' if char != '\n' else '0')
@@ -897,8 +897,8 @@ class ReFile(tk.Frame):
         self.statusLabel['text'] = 'Selecting files'
         files = filedialog.askopenfilenames(initialdir='/', title='Select File',
                                             filetypes=[
-                                                ('All Files', '.doc .docx .txt .pdf'),
-                                                ('Word Documents', '.doc .docx'),
+                                                ('All Files', '.docx .txt .pdf'),
+                                                ('Word Documents', '.docx'),
                                                 ('Text Documents', '.txt'),
                                                 ('Adobe PDF', '.pdf')
                                             ])
@@ -947,6 +947,6 @@ if __name__ == '__main__':
     root.protocol('WM_DELETE_WINDOW', mainApp.onClosingWindow)
     root.mainloop()
 
-    with open('xlList.txt', 'w') as f:
+    with open('xlList.txt', 'w', encoding='utf-8') as f:
         for xlFile in mainApp.xlFiles:
             f.write(xlFile + '\n')
