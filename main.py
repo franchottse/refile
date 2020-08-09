@@ -14,6 +14,8 @@ class ReFile(tk.Frame):
         super().__init__()
         #tk.Frame.__init__(self, self.master)
         self.master.bind('<Delete>', self.deleteFile)
+        self.master.bind('<Control-o>', self.addFile)
+        self.master.bind('<Control-d>', self.clearAllFiles)
 
         # Style setup
         self.width = 1200
@@ -241,18 +243,22 @@ class ReFile(tk.Frame):
         # File
         self.fileMenu = Menu(self.menu, tearoff=False)
         self.menu.add_cascade(label='File', menu=self.fileMenu)
-        self.fileMenu.add_command(label='Open', command=self.addFile)
         self.fileMenu.add_command(
-            label='Clear All', command=self.clearAllFiles)
+            label='Open', accelerator='                    Ctrl+O', command=self.addFile)
+        self.fileMenu.add_command(
+            label='Clear All', accelerator='                    Ctrl+D', command=self.clearAllFiles)
         self.fileMenu.add_separator()
         self.fileMenu.add_command(label='Exit', command=self.onClosingWindow)
 
         # Format
         self.formatMenu = Menu(self.menu, tearoff=False)
         self.menu.add_cascade(label='Format', menu=self.formatMenu)
-        self.formatMenu.add_command(label='Word Wrap')
-        self.formatMenu.add_command(label='Font Size')
-        self.formatMenu.add_command(label='Clear Style')
+        self.formatMenu.add_command(
+            label='Word Wrap            ', accelerator='')
+        self.formatMenu.add_command(
+            label='Font Size            ', accelerator='')
+        self.formatMenu.add_command(
+            label='Clear Style            ', accelerator='')
 
         # Help
         self.helpMenu = Menu(self.menu, tearoff=False)

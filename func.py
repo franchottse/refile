@@ -3,22 +3,21 @@ import textract
 from tkinter import filedialog
 from docx import Document
 from docx.shared import RGBColor, Pt
+from docx.oxml.ns import qn
+from docx.oxml.shared import OxmlElement
 from diff_match_patch import diff_match_patch
 from bs4 import BeautifulSoup
-import re
-from fpdf import FPDF, HTMLMixin
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 # This code is mainly for reading and outputing files
 
 # TODO: Try to solve the problem of double newlines when reading word documents
 
 
-class MyFPDF(FPDF, HTMLMixin):
-    pass
-
 # Read file
-
-
 def importFile(path):
     if not os.path.exists(path):
         return ''
@@ -58,85 +57,87 @@ def exportFile(output, underlineOnOff, strikethroughOnOff, highlightOnOff, parag
 
     # May add HTML format
     file = filedialog.asksaveasfile(initialdir='/', initialfile='output.docx', defaultextension='*.*', filetypes=[
-        ('All Files', '.docx .pdf .txt'),
-        ('Word Documents', '.docx'),
+        ('All Files', '.doc .docx .pdf .txt'),
+        ('Word Documents', '.doc .docx'),
         ('Adobe PDF', '.pdf')])
 
     if file is None:
         return
 
     if file.name.lower().endswith(('.doc', '.docx')):
+        # Create a template
         document = Document()
+
+        # Add a paragraph
         p = document.add_paragraph()
+
         for action, text in diffs:
-            font = p.add_run(text).font
-            font.size = Pt(14) if action == 0 else Pt(16)
-            if highlightOnOff:
-                if action == -1:
-                    font.strike = strikethroughOnOff
-                    font.color.rgb = RGBColor(255, 0, 0)
-                elif action == 1:
-                    font.underline = underlineOnOff
-                    font.color.rgb = RGBColor(0, 0, 255)
+            # Add text to paragraph reference
+            run = p.add_run(text)
+            run.font.size = Pt(14) if action == 0 else Pt(16)
+
+            # Get the XML tag
+            tag = run._r
+
+            # Create an XML element
+            shd = OxmlElement('w:shd')
+
+            # Add attributes to the element
+            shd.set(qn('w:val'), 'clear')
+            shd.set(qn('w:color'), 'auto')
+
+            run.font.strike = strikethroughOnOff and action == -1
+            run.font.underline = underlineOnOff and action == 1
+
+            # Set the shading colour
+            shd.set(qn('w:fill'), 'FFAAAA' if action == -1 else 'AAFFAA')
+
+            # Append the element under <w:rPr>
+            if action != 0:
+                tag.rPr.append(shd)
+
         document.save(file.name)
     elif file.name.lower().endswith('.pdf'):
-        dmp = diff_match_patch()
-        diff = dmp.diff_prettyHtml(diffs)
-        diff_new_html = HTMLstyle(
-            diff, underlineOnOff, strikethroughOnOff, highlightOnOff, paragraphMarkOnOff)
+        # Change the text for outputing a PDF
+        pdf_text = ''
+        rep = ('\n', '¶<br/>') if paragraphMarkOnOff else ('\n', '<br/>')
+        underline_open_tag, underline_close_tag = (
+            '<u>', '</u>') if underlineOnOff else ('', '')
+        strike_open_tag, strike_close_tag = (
+            '<strike>', '</strike>') if strikethroughOnOff else ('', '')
+        for action, text in diffs:
+            if action == -1:
+                pdf_text += '<span backcolor="#FFAAAA" fontSize=16>' + \
+                    strike_open_tag + \
+                    text.replace(*rep) + strike_close_tag + '</span>'
+            elif action == 1:
+                pdf_text += '<span backcolor="#AAFFAA" fontSize=16>' + \
+                    underline_open_tag + \
+                    text.replace(*rep) + underline_close_tag + '</span>'
+            else:
+                pdf_text += '<span>' + text.replace(*rep) + '</span>'
 
-        pdf = MyFPDF()
-        pdf.add_page()
-        pdf.write_html(diff_new_html)
-        pdf.output(file.name, 'F')
+        # Register a font
+        pdfmetrics.registerFont(TTFont('MSJH', './msjh.ttc'))
+
+        # Create a style
+        style = ParagraphStyle(
+            name='Normal',
+            fontName='MSJH',
+            fontSize=14,
+            leading=21,
+        )
+
+        # Output PDF file
+        simpledoctemplate = SimpleDocTemplate(file.name)
+        simpledoctemplate.build([Paragraph(pdf_text, style)])
     else:
         with open(file.name, 'w', encoding='utf-8') as f:
             f.write(''.join([word for _, word in diffs]))
 
-    print('file:', file)
-    print('file.name:', file.name)
+    print('Output path:', file.name)
     file.close()
-
-
-# Change HTML style
-def HTMLstyle(old_html, underlineOnOff, strikethroughOnOff, highlightOnOff, paragraphMarkOnOff):
-    soup = BeautifulSoup(old_html, 'html.parser')
-    while True:
-        old_tag = soup.find('del')
-        if not old_tag:
-            break
-        old_tag['style'] = 'background:#FFAAAA' if highlightOnOff else ''
-        if not strikethroughOnOff:
-            old_tag.name = 'span'
-
-    while True:
-        old_tag = soup.find('ins')
-        if not old_tag:
-            break
-        old_tag['style'] = 'background:#AAFFAA' if highlightOnOff else ''
-        if not underlineOnOff:
-            old_tag.name = 'span'
-
-    # Remove '¶' if paragraph mark is off
-    while True:
-        mark_span_tag = soup.find('span')
-        mark_ins_tag = soup.find('ins')
-        mark_del_tag = soup.find('del')
-        if not mark_span_tag and not mark_ins_tag and not mark_del_tag:
-            break
-        if not underlineOnOff:
-            if mark_span_tag:
-                mark_span_tag.string = mark_span_tag.string.replace('¶', '')
-            if mark_ins_tag:
-                mark_ins_tag.string = mark_ins_tag.string.replace('¶', '')
-            if mark_del_tag:
-                mark_del_tag.string = mark_del_tag.string.replace('¶', '')
-
-    return str(soup)
 
 
 def test_function():
     print("test function!!")
-
-
-# TODO: Try to access files
