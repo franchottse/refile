@@ -105,7 +105,7 @@ The repo contains two executable files, one is installable, another one is of .E
     -   [x] File name wrapper
 -   [x] Create button frame
     -   [x] ~~Open File~~
-    -   [ ] Merge (Diff) Text
+    -   [x] Merge Text
     -   [x] Clear Contents
     -   [x] ~~Clear All Files~~
 -   [ ] Create right click menu
@@ -132,12 +132,12 @@ The repo contains two executable files, one is installable, another one is of .E
 -   [x] Make sure the files can be read
 -   [x] Fetch data from Word, text or PDF files
 -   [x] Read text from Word, text or PDF files
--   [ ] Put text to the GUI
--   [ ] Show the differences from two files
--   [ ] Display the output on a pop-up window
--   [ ] Bind functions for all four options
--   [ ] Bind two functions: "Save Output" for saving output text
--   [ ] Bind functions for deleting one or all files
+-   [x] Put text to the GUI
+-   [x] Show the differences from two files
+-   [x] Display the output on a pop-up window
+-   [x] Bind functions to all four options
+-   [x] Bind function to "Save Output" for saving output text
+-   [x] Bind functions to deleting one or all files
 -   [ ] Bind functions to all menu options
 
 <a name="convertion" />

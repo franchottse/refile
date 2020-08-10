@@ -1,20 +1,19 @@
 import os
 import textract
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from docx import Document
-from docx.shared import RGBColor, Pt
+from docx.shared import Pt
 from docx.oxml.ns import qn
 from docx.oxml.shared import OxmlElement
-from diff_match_patch import diff_match_patch
-from bs4 import BeautifulSoup
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from win32com.client import Dispatch
 
 # This code is mainly for reading and outputing files
 
-# TODO: Try to solve the problem of double newlines when reading word documents
+# TODO: Try to fix reading doc (not docx) problem
 
 
 # Read file
@@ -26,40 +25,71 @@ def importFile(path):
     if path.lower().endswith(('.docx', '.pdf')):
         rep = (b'\n\n', b'\n') if path.lower().endswith(
             ('.doc', '.docx')) else (b'\r\n', b'\n')
-        txt = textract.process(path).replace(*rep).decode('utf-8')
+        try:
+            txt = textract.process(path).replace(*rep).decode('utf-8')
+        except:
+            messagebox.showerror('Error', 'Unknown error.')
+            return ''
+    elif path.lower().endswith('.doc'):
+        # Open word application
+        word = Dispatch('Word.Application')
+        word.Visible = False
+        word.DisplayAlerts = False
+        try:
+            doc = word.Documents.Open(FileName=path, Encoding='utf-8')
+            for para in doc.paragraphs:
+                txt += para.Range.Text
+                print(para.Range.Text)
+        except:
+            messagebox.showerror('Error', 'Unknown error.')
+            return ''
+        txt = txt.replace('\r', '')
+        print('.doc txt:', txt)
+        doc.Close()
+        word.Quit
     else:
-        f = open(path, 'r', encoding='utf-8')
-        txt = f.read()
-    '''elif path.lower().endswith('.doc'):
-        docx_file = path + 'x'
-        if not os.path.exists(docx_file):
-            os.system('antiword ' + path + ' > ' + docx_file)
-            with open(docx_file) as f:
-                text = f.read()
-            os.remove(docx_file)  # docx_file was just to read, so deleting
-        else:
-            # already a file with same name as doc exists having docx extension,
-            # which means it is a different file, so we cant read it
-            print(
-                'Info : file with same name of doc exists having docx extension, so we cant read it')
-            text = ''
-    '''
+        try:
+            f = open(path, 'r', encoding='utf-8')
+            txt = f.read()
+        except:
+            messagebox.showerror('Error', 'Unknown error.')
+            return ''
+
     return txt
 
 
 # Output to a file
-def exportFile(output, underlineOnOff, strikethroughOnOff, highlightOnOff, paragraphMarkOnOff):
+def exportFile(output, underlineOnOff, strikethroughOnOff, highlightOnOff, mergeWindow):
     if not output:
+        messagebox.showinfo(
+            'ReFile', 'There is no text in the output, please add text before saving output.')
         return
 
-    diffs = [(action, word.replace('¶\n', '\n')) for action, word in output]
-    print('diffs:', diffs)
+    print('output:', output)
 
-    # May add HTML format
-    file = filedialog.asksaveasfile(initialdir='/', initialfile='output.docx', defaultextension='*.*', filetypes=[
-        ('All Files', '.doc .docx .pdf .txt'),
-        ('Word Documents', '.doc .docx'),
-        ('Adobe PDF', '.pdf')])
+    # Disable the merge window
+    mergeWindow.withdraw()
+
+    try:
+        # May add HTML format
+        file = filedialog.asksaveasfile(initialdir='/', initialfile='output.docx', defaultextension='*.*', filetypes=[
+            ('All Files', '.doc .docx .pdf .txt'),
+            ('Word Documents', '.doc .docx'),
+            ('Adobe PDF', '.pdf')])
+    except PermissionError:
+        messagebox.showerror(
+            'Error', 'Cannot save the output to a file, please close the file or see the permisson of the file if you are overwriting it.')
+        # Enable merge window
+        mergeWindow.deiconify()
+        return
+    except:
+        messagebox.showerror('Error', 'Unknown error.')
+        # Enable merge window
+        mergeWindow.deiconify()
+        return
+
+    # Enable merge window
+    mergeWindow.deiconify()
 
     if file is None:
         return
@@ -71,7 +101,7 @@ def exportFile(output, underlineOnOff, strikethroughOnOff, highlightOnOff, parag
         # Add a paragraph
         p = document.add_paragraph()
 
-        for action, text in diffs:
+        for action, text in output:
             # Add text to paragraph reference
             run = p.add_run(text)
             run.font.size = Pt(14) if action == 0 else Pt(16)
@@ -96,34 +126,42 @@ def exportFile(output, underlineOnOff, strikethroughOnOff, highlightOnOff, parag
             if action != 0:
                 tag.rPr.append(shd)
 
-        document.save(file.name)
+            document.save(file.name)
     elif file.name.lower().endswith('.pdf'):
         # Change the text for outputing a PDF
         pdf_text = ''
-        rep = ('\n', '¶<br/>') if paragraphMarkOnOff else ('\n', '<br/>')
+
+        # Set both underline and strike tag
         underline_open_tag, underline_close_tag = (
             '<u>', '</u>') if underlineOnOff else ('', '')
         strike_open_tag, strike_close_tag = (
             '<strike>', '</strike>') if strikethroughOnOff else ('', '')
-        for action, text in diffs:
+
+        # Replace newline character with br tag
+        rep = ('\n', '<br/>')
+        for action, text in output:
+            deletion_colour = ' backcolor="#FFAAAA" ' if action == -1 and highlightOnOff else ' '
+            insertion_colour = ' backcolor="#AAFFAA" ' if action == 1 and highlightOnOff else ' '
             if action == -1:
-                pdf_text += '<span backcolor="#FFAAAA" fontSize=16>' + \
+                pdf_text += '<span' + deletion_colour + 'fontSize=16>' + \
                     strike_open_tag + \
                     text.replace(*rep) + strike_close_tag + '</span>'
             elif action == 1:
-                pdf_text += '<span backcolor="#AAFFAA" fontSize=16>' + \
+                pdf_text += '<span' + insertion_colour + 'fontSize=16>' + \
                     underline_open_tag + \
                     text.replace(*rep) + underline_close_tag + '</span>'
             else:
                 pdf_text += '<span>' + text.replace(*rep) + '</span>'
 
         # Register a font
-        pdfmetrics.registerFont(TTFont('MSJH', './msjh.ttc'))
+        pdfmetrics.registerFont(
+            TTFont('Noto Sans HK', './NotoSansHK-Regular.ttf'))
 
         # Create a style
         style = ParagraphStyle(
             name='Normal',
-            fontName='MSJH',
+            fontName='Noto Sans HK',
+            textColor='black',
             fontSize=14,
             leading=21,
         )
@@ -131,13 +169,12 @@ def exportFile(output, underlineOnOff, strikethroughOnOff, highlightOnOff, parag
         # Output PDF file
         simpledoctemplate = SimpleDocTemplate(file.name)
         simpledoctemplate.build([Paragraph(pdf_text, style)])
-    else:
+    elif file.name.lower().endswith('.txt'):
         with open(file.name, 'w', encoding='utf-8') as f:
-            f.write(''.join([word for _, word in diffs]))
+            f.write(''.join([word for _, word in output]))
+    else:
+        messagebox.showwarning(
+            'Warning', 'The file format you are saving may not be compatible with text files, please try again.')
 
     print('Output path:', file.name)
     file.close()
-
-
-def test_function():
-    print("test function!!")

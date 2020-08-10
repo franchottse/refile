@@ -191,7 +191,7 @@ class ReFile(tk.Frame):
         # Reference frames
         self.statusFrame = ttk.Frame(self.master)
         self.statusLabel = ttk.Label(
-            self.statusFrame, text='Welcome to ReFile! Please double click the file area or click Select File to add files', style='Status.TLabel')
+            self.statusFrame, text='Welcome to ReFile! Please double click the file area to add files', style='Status.TLabel')
 
     # Pack and grid everything
     def createWidgets(self):
@@ -246,15 +246,16 @@ class ReFile(tk.Frame):
         self.fileMenu.add_command(
             label='Open', accelerator='                    Ctrl+O', command=self.addFile)
         self.fileMenu.add_command(
-            label='Clear All', accelerator='                    Ctrl+D', command=self.clearAllFiles)
+            label='Delete All', accelerator='                    Ctrl+D', command=self.clearAllFiles)
         self.fileMenu.add_separator()
         self.fileMenu.add_command(label='Exit', command=self.onClosingWindow)
 
         # Format
+        self.wordWrapBool = False
         self.formatMenu = Menu(self.menu, tearoff=False)
         self.menu.add_cascade(label='Format', menu=self.formatMenu)
-        self.formatMenu.add_command(
-            label='Word Wrap            ', accelerator='')
+        self.formatMenu.add_checkbutton(
+            label='Word Wrap            ', accelerator='', command=self.wordWrap)
         self.formatMenu.add_command(
             label='Font Size            ', accelerator='')
         self.formatMenu.add_command(
@@ -271,7 +272,7 @@ class ReFile(tk.Frame):
     def createTextBoxes(self):
         # Create scrollbar for both text boxes
         self.contentVerticalScrollBar = ttk.Scrollbar(
-            self.contentFrame, orient=tk.VERTICAL, command=self.onContentScrolling)
+            self.contentFrame, orient=tk.VERTICAL, command=self.onContentVerticalScrolling)
 
         self.oldTextBox = tk.Text(self.contentFieldFrame, width=1, font=('Helvetica', 12), selectbackground='#FFFFAA',
                                   selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollBar.set)
@@ -499,20 +500,26 @@ class ReFile(tk.Frame):
         self.modifyTextBoxes()
 
     # TODO: Try to add text wrapping feature (need adding horizontal scrollbar for both text boxes)
+    # Enable word wrapping
+    def wordWrap(self):
+        self.wordWrapBool = not self.wordWrapBool
+        print('self.wordWrapBool:', self.wordWrapBool)
 
-    def test_func(self):
-        func.test_function()
-
-    # Contents scrollbar function
-    def onContentScrolling(self, *args):
+    # Contents vertical scrollbar function
+    def onContentVerticalScrolling(self, *args):
         self.oldTextBox.yview(*args)
         self.newTextBox.yview(*args)
 
-    # Mouse wheel event
+    # Mouse wheel event for vertical scrolling
     def onMouseWheeling(self, event):
         self.oldTextBox.yview_scroll(-1*(event.delta//120), tk.UNITS)
         self.newTextBox.yview_scroll(-1*(event.delta//120), tk.UNITS)
         return 'break'
+
+    # Contents horizontal scrollbar function
+    def onContentHorizontalScrolling(self, *args):
+        self.oldTextBox.xview(*args)
+        self.newTextBox.xview(*args)
 
     # Make sure the scrollbar works for the file list frame
     def onFileListFrameResizing(self, event=None):
@@ -747,7 +754,7 @@ class ReFile(tk.Frame):
 
         # Save output button
         self.saveButton = ttk.Button(
-            self.mergeResultButtonFrame, text='Save Output', style='Wild.TButton', command=lambda: func.exportFile(self.diffs, self.underlineOnOff, self.strikethroughOnOff, self.highlightOnOff, self.paragraphMarkOnOff))
+            self.mergeResultButtonFrame, text='Save Output', style='Wild.TButton', command=lambda: func.exportFile(self.diffs, self.underlineOnOff, self.strikethroughOnOff, self.highlightOnOff, self.mergeWindow))
         self.saveButton.pack(padx=5, pady=5, side=tk.RIGHT)
 
     # Merge text
@@ -903,24 +910,21 @@ class ReFile(tk.Frame):
         self.statusLabel['text'] = 'Selecting files'
         files = filedialog.askopenfilenames(initialdir='/', title='Select File',
                                             filetypes=[
-                                                ('All Files', '.docx .txt .pdf'),
-                                                ('Word Documents', '.docx'),
+                                                ('All Files', '.doc .docx .txt .pdf'),
+                                                ('Word Documents', '.doc .docx'),
                                                 ('Text Documents', '.txt'),
-                                                ('Adobe PDF', '.pdf')
-                                            ])
+                                                ('Adobe PDF', '.pdf')])
 
         for file in files:
             if file not in self.xlFiles and file != '':
                 self.xlFiles.append(file)
-                #self.statusLabel['text'] = 'Added new file: ' + os.path.basename(file)
                 print('New file: ' + file)
-            elif file in self.xlFiles:
-                #self.statusLabel['text'] = 'There is at least a file added before.'
+            '''elif file in self.xlFiles:
                 self.statusLabel['text'] = 'There is at least a file added before.'
                 messagebox.showinfo(
                     'ReFile', 'There is at least a file added before.')
                 self.addFile()
-                break
+                break'''
         for widget in self.fileListFrame.winfo_children():
             widget.destroy()
 
@@ -949,7 +953,6 @@ class ReFile(tk.Frame):
 if __name__ == '__main__':
     root = tk.Tk()
     mainApp = ReFile(root)
-    mainApp.test_func()
     root.protocol('WM_DELETE_WINDOW', mainApp.onClosingWindow)
     root.mainloop()
 
