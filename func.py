@@ -13,7 +13,7 @@ from win32com.client import Dispatch
 
 # This code is mainly for reading and outputing files
 
-# TODO: Try to fix reading doc (not docx) problem
+# TODO: Try to handle exceptions
 
 
 # Read file
@@ -27,21 +27,30 @@ def importFile(path):
             ('.doc', '.docx')) else (b'\r\n', b'\n')
         try:
             txt = textract.process(path).replace(*rep).decode('utf-8')
+        except textract.exceptions.MissingFileError:
+            messagebox.showerror(
+                'Error', 'The file cannot be found, please check your file location.')
+            return ''
         except:
             messagebox.showerror('Error', 'Unknown error.')
             return ''
     elif path.lower().endswith('.doc'):
         # Open word application
         word = Dispatch('Word.Application')
+
+        # Make it work in background
         word.Visible = False
+
+        # Prevent the saving alerts
         word.DisplayAlerts = False
         try:
             doc = word.Documents.Open(FileName=path, Encoding='utf-8')
-            for para in doc.paragraphs:
-                txt += para.Range.Text
-                print(para.Range.Text)
+            for p in doc.paragraphs:
+                txt += p.Range.Text
+                print(p.Range.Text)
         except:
             messagebox.showerror('Error', 'Unknown error.')
+            word.Quit
             return ''
         txt = txt.replace('\r', '')
         print('.doc txt:', txt)
@@ -59,16 +68,13 @@ def importFile(path):
 
 
 # Output to a file
-def exportFile(output, underlineOnOff, strikethroughOnOff, highlightOnOff, mergeWindow):
+def exportFile(output, underlineOnOff, strikethroughOnOff, highlightOnOff):
     if not output:
-        messagebox.showinfo(
+        messagebox.showwarning(
             'ReFile', 'There is no text in the output, please add text before saving output.')
         return
 
     print('output:', output)
-
-    # Disable the merge window
-    mergeWindow.withdraw()
 
     try:
         # May add HTML format
@@ -77,19 +83,12 @@ def exportFile(output, underlineOnOff, strikethroughOnOff, highlightOnOff, merge
             ('Word Documents', '.doc .docx'),
             ('Adobe PDF', '.pdf')])
     except PermissionError:
-        messagebox.showerror(
+        messagebox.showwarning(
             'Error', 'Cannot save the output to a file, please close the file or see the permisson of the file if you are overwriting it.')
-        # Enable merge window
-        mergeWindow.deiconify()
         return
     except:
         messagebox.showerror('Error', 'Unknown error.')
-        # Enable merge window
-        mergeWindow.deiconify()
         return
-
-    # Enable merge window
-    mergeWindow.deiconify()
 
     if file is None:
         return

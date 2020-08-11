@@ -80,6 +80,15 @@ class ReFile(tk.Frame):
         # Variable to store the number of differences
         self.numDiff = 0
 
+        # Variable to check if the word wrapping option is on
+        self.wordWrapBool = False
+
+        # Variable to save the current font size
+        self.fontSize = 12
+
+        # Variable to save the current option of radio buttons for font size
+        self.radioFontOption = tk.StringVar()
+
         # App setup
         self.configureGUI()
         self.createWidgets()
@@ -251,13 +260,16 @@ class ReFile(tk.Frame):
         self.fileMenu.add_command(label='Exit', command=self.onClosingWindow)
 
         # Format
-        self.wordWrapBool = False
         self.formatMenu = Menu(self.menu, tearoff=False)
         self.menu.add_cascade(label='Format', menu=self.formatMenu)
-        self.formatMenu.add_checkbutton(
-            label='Word Wrap            ', accelerator='', command=self.wordWrap)
-        self.formatMenu.add_command(
-            label='Font Size            ', accelerator='')
+        self.fontSubmenu = Menu(self.formatMenu, tearoff=False)
+        self.formatMenu.add_cascade(
+            label='Font Size            ', menu=self.fontSubmenu)
+        for item in (12, 14, 16):
+            self.fontSubmenu.add_radiobutton(label='{} points'.format(
+                item), variable=self.radioFontOption, value='{} points'.format(item), command=self.changeFont)
+        self.radioFontOption.set('12 points')
+
         self.formatMenu.add_command(
             label='Clear Style            ', accelerator='')
 
@@ -270,15 +282,20 @@ class ReFile(tk.Frame):
 
     # Text boxes
     def createTextBoxes(self):
-        # Create scrollbar for both text boxes
+        # Create vertical scrollbar for both text boxes
         self.contentVerticalScrollBar = ttk.Scrollbar(
             self.contentFrame, orient=tk.VERTICAL, command=self.onContentVerticalScrolling)
 
-        self.oldTextBox = tk.Text(self.contentFieldFrame, width=1, font=('Helvetica', 12), selectbackground='#FFFFAA',
+        # Create a sizegrip to pad both scrollbars
+        self.sizegrip = tk.Label(self.contentFrame, height=17, width=17)
+
+        # Old and new text boxes
+        self.oldTextBox = tk.Text(self.contentFieldFrame, height=18, width=1, font=('Helvetica', self.fontSize), selectbackground='#FFFFAA',
                                   selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollBar.set)
-        self.newTextBox = tk.Text(self.contentFieldFrame, width=1, font=('Helvetica', 12), selectbackground='#FFFFAA',
+        self.newTextBox = tk.Text(self.contentFieldFrame, height=18, width=1, font=('Helvetica', self.fontSize), selectbackground='#FFFFAA',
                                   selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollBar.set)
 
+        # Add tags for both boxes
         self.oldTextBox.tag_config(
             '-1', overstrike=False, background='SystemWindow')
         self.newTextBox.tag_config(
@@ -290,7 +307,7 @@ class ReFile(tk.Frame):
         self.oldTextBox.bind('<MouseWheel>', self.onMouseWheeling)
         self.newTextBox.bind('<MouseWheel>', self.onMouseWheeling)
 
-    # Pack both text boxes
+    # Pack both text boxes and vertical scrollbar
     def renderTextBoxes(self):
         self.contentVerticalScrollBar.pack(side=tk.RIGHT, fill=tk.Y)
 
@@ -499,12 +516,6 @@ class ReFile(tk.Frame):
 
         self.modifyTextBoxes()
 
-    # TODO: Try to add text wrapping feature (need adding horizontal scrollbar for both text boxes)
-    # Enable word wrapping
-    def wordWrap(self):
-        self.wordWrapBool = not self.wordWrapBool
-        print('self.wordWrapBool:', self.wordWrapBool)
-
     # Contents vertical scrollbar function
     def onContentVerticalScrolling(self, *args):
         self.oldTextBox.yview(*args)
@@ -520,6 +531,21 @@ class ReFile(tk.Frame):
     def onContentHorizontalScrolling(self, *args):
         self.oldTextBox.xview(*args)
         self.newTextBox.xview(*args)
+
+    # Change font size
+    def changeFont(self):
+        size = 12
+        if self.radioFontOption.get() == '14 points':
+            size = 14
+        elif self.radioFontOption.get() == '16 points':
+            size = 16
+        self.oldTextBox.config(font=('Helvetica', size))
+        self.newTextBox.config(font=('Helvetica', size))
+        self.fontSize = size
+
+    # Clear all styles
+    def clearStyle(self, event=None):
+        pass
 
     # Make sure the scrollbar works for the file list frame
     def onFileListFrameResizing(self, event=None):
@@ -644,7 +670,7 @@ class ReFile(tk.Frame):
 
         txt = func.importFile(self.selectedFile)
         if txt == '':
-            tk.messagebox.showerror(
+            tk.messagebox.showwarning(
                 title='Error', message='The selected file is empty or does not exist.')
             return
 
@@ -698,8 +724,12 @@ class ReFile(tk.Frame):
         self.openFile.state(['disabled'])
         self.clearContent.state(['disabled'])
 
-        mergeWidth = 600
-        mergeHeight = 350
+        mergeWidth = 680
+        if self.fontSize == 14:
+            mergeWidth = 820
+        elif self.fontSize == 16:
+            mergeWidth = 890
+        mergeHeight = 380
         xMergePosition = (
             self.mergeWindow.winfo_screenwidth()//2)-(mergeWidth//2)
         yMergePosition = (
@@ -708,7 +738,7 @@ class ReFile(tk.Frame):
         self.mergeWindow.geometry(
             '{}x{}+{}+{}'.format(mergeWidth, mergeHeight, xMergePosition, yMergePosition))
         self.mergeWindow.configure(bg='#FFEAAA')
-        self.mergeWindow.minsize(680, 380)
+        self.mergeWindow.minsize(mergeWidth, mergeHeight)
 
         self.mergeFrame = ttk.Frame(self.mergeWindow)
         self.mergeFrame.pack(padx=5, pady=5, fill=tk.BOTH, expand=True)
@@ -721,7 +751,7 @@ class ReFile(tk.Frame):
 
         # Merge text box
         self.mergeTextBox = tk.Text(self.mergeFrame, width=70, height=12, font=(
-            'Helvetica', 12), selectbackground='#FFFFAA', selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD, state='disabled')
+            'Helvetica', self.fontSize), selectbackground='#FFFFAA', selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD)
         self.mergeTextBox.tag_config('-1', overstrike=self.strikethroughOnOff, background='#FFAAAA' if self.highlightOnOff else 'SystemWindow',
                                      selectbackground='#FFAAAA' if self.highlightOnOff else '#FFFFAA')
         self.mergeTextBox.tag_config('1', underline=self.underlineOnOff, background='#AAFFAA' if self.highlightOnOff else 'SystemWindow',
@@ -754,7 +784,7 @@ class ReFile(tk.Frame):
 
         # Save output button
         self.saveButton = ttk.Button(
-            self.mergeResultButtonFrame, text='Save Output', style='Wild.TButton', command=lambda: func.exportFile(self.diffs, self.underlineOnOff, self.strikethroughOnOff, self.highlightOnOff, self.mergeWindow))
+            self.mergeResultButtonFrame, text='Save Output', style='Wild.TButton', command=self.exportFile)
         self.saveButton.pack(padx=5, pady=5, side=tk.RIGHT)
 
     # Merge text
@@ -771,6 +801,18 @@ class ReFile(tk.Frame):
                     action) if char != '\n' else '0')
 
         self.mergeTextBox.config(state=tk.DISABLED)
+
+    # Export file
+    def exportFile(self, event=None):
+        # Disable the merge window
+        self.mergeWindow.withdraw()
+
+        # Save output
+        func.exportFile(self.diffs, self.underlineOnOff,
+                        self.strikethroughOnOff, self.highlightOnOff)
+
+        # Enable merge window
+        self.mergeWindow.deiconify()
 
     # Enable buttons from root when closing merge window
     def onMergeWindowDestroying(self, event=None):

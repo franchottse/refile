@@ -92,10 +92,10 @@ The repo contains two executable files, one is installable, another one is of .E
         -   [ ] Text box scrollbar frame
             -   [x] Text box
             -   [ ] Scrollbars
-        -   [ ] Merge text result and button frame
+        -   [x] Merge text result and button frame
             -   [x] Result label
             -   [x] Buttons
-                -   [ ] Save Output
+                -   [x] Save Output
                 -   [x] Cancel
 -   [x] Create file frame
     -   [x] A scrollbar
@@ -117,7 +117,7 @@ The repo contains two executable files, one is installable, another one is of .E
         -   [x] Clear All
         -   [x] Exit
     -   [ ] Format
-        -   [x] Word Wrap
+        -   [x] ~~Word Wrap~~
         -   [x] Font Size
         -   [x] Clear Style
     -   [ ] Help
