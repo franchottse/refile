@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 from diff_match_patch import diff_match_patch
 import os
 import func
+import webbrowser
 
 
 class ReFile(tk.Frame):
@@ -12,7 +13,7 @@ class ReFile(tk.Frame):
         self.xlFiles = []
         self.master = master
         super().__init__()
-        #tk.Frame.__init__(self, self.master)
+        # tk.Frame.__init__(self, self.master)
         self.master.bind('<Delete>', self.deleteFile)
         self.master.bind('<Control-o>', self.addFile)
         self.master.bind('<Control-d>', self.clearAllFiles)
@@ -20,10 +21,8 @@ class ReFile(tk.Frame):
         # Style setup
         self.width = 1200
         self.height = 700
-        self.xPosition = (self.master.winfo_screenwidth() //
-                          2) - (self.width // 2)
-        self.yPosition = (self.master.winfo_screenheight() //
-                          2) - (self.height // 2)
+        self.xPosition = (self.master.winfo_screenwidth()//2)-(self.width//2)
+        self.yPosition = (self.master.winfo_screenheight()//2)-(self.height//2)
         self.style = ttk.Style(self.master)
         # self.style.theme_use('clam')
         self.fileHighlightColour = '#B5ACA8'
@@ -47,7 +46,7 @@ class ReFile(tk.Frame):
             ('pressed', '!disabled', '#ED5903'),
             ('disabled', 'white')
         ])
-        #self.style.configure("TEST.TLabel", foreground='white', background='black', font=(10))
+        # self.style.configure("TEST.TLabel", foreground='white', background='black', font=(10))
         self.style.configure('Tab.TLabel', background='white', font=(
             'Helvetica', '11', 'bold'), relief=tk.SOLID, anchor=tk.CENTER)
         self.style.configure(
@@ -102,8 +101,6 @@ class ReFile(tk.Frame):
         # App title & configuration
         self.master.winfo_toplevel().title('ReFile')
         self.master.iconbitmap('./refile-icon.ico')
-        self.master.geometry(
-            '{}x{}+{}+{}'.format(self.width, self.height, self.xPosition, self.yPosition))
         # colours = skyblue, #B7E7B0, #93E9BE, #FFEAAA <- recommend
         self.master.configure(bg='#FFEAAA')
         self.master.minsize(690, 690)
@@ -145,7 +142,7 @@ class ReFile(tk.Frame):
 
         # Create frame for displaying data
         self.contentFrame = ttk.Frame(self.master)
-        #self.contentLabel = tk.Label(self.contentFrame, text='Data', bg='white')
+        # self.contentLabel = tk.Label(self.contentFrame, text='Data', bg='white')
         self.contentLabel = ttk.Label(
             self.contentFrame, text='Contents', style='Tab.TLabel')
         self.contentFieldFrame = ttk.Frame(self.contentFrame)
@@ -239,9 +236,13 @@ class ReFile(tk.Frame):
         self.openFile.grid(row=0, column=0, padx=5, pady=5)
 
         # Clear files button
-        #tk.Button(self.buttonFrame, text="Show scores", **buttonStyle,command=self.show).grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
+        # tk.Button(self.buttonFrame, text="Show scores", **buttonStyle,command=self.show).grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
         self.clearContent.grid(row=0, column=1, padx=5, pady=5,
                                sticky=tk.N+tk.S+tk.E+tk.W)
+
+        # Make sure the window is placed in the centre
+        self.master.geometry(
+            '{}x{}+{}+{}'.format(self.width, self.height, self.xPosition, self.yPosition))
 
     # Menu
     def createMenu(self):
@@ -271,29 +272,42 @@ class ReFile(tk.Frame):
         self.radioFontOption.set('12 points')
 
         self.formatMenu.add_command(
-            label='Clear Style            ', accelerator='')
+            label='Clear Style            ', accelerator='', command=self.clearStyle)
 
         # Help
         self.helpMenu = Menu(self.menu, tearoff=False)
         self.menu.add_cascade(label='Help', menu=self.helpMenu)
-        self.helpMenu.add_command(label='How to Use')
+        self.helpMenu.add_command(
+            label='How to Use', command=self.methodMessage)
+        self.helpMenu.add_command(
+            label='Release Notes', command=self.releaseNotesMessage)
         self.helpMenu.add_separator()
-        self.helpMenu.add_command(label='About ReFile')
+        self.helpMenu.add_command(
+            label='About ReFile', command=self.aboutMessage)
 
     # Text boxes
     def createTextBoxes(self):
         # Create vertical scrollbar for both text boxes
-        self.contentVerticalScrollBar = ttk.Scrollbar(
+        self.contentVerticalScrollBar = tk.Scrollbar(
             self.contentFrame, orient=tk.VERTICAL, command=self.onContentVerticalScrolling)
 
-        # Create a sizegrip to pad both scrollbars
-        self.sizegrip = tk.Label(self.contentFrame, height=17, width=17)
+        # Create horizontal scrollbar for both text boxes
+        self.contentHorizontalScrollBar = tk.Scrollbar(
+            self.contentFrame, orient=tk.HORIZONTAL, command=self.onContentHorizontalScrolling)
 
         # Old and new text boxes
-        self.oldTextBox = tk.Text(self.contentFieldFrame, height=18, width=1, font=('Helvetica', self.fontSize), selectbackground='#FFFFAA',
-                                  selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollBar.set)
-        self.newTextBox = tk.Text(self.contentFieldFrame, height=18, width=1, font=('Helvetica', self.fontSize), selectbackground='#FFFFAA',
-                                  selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollBar.set)
+        self.oldTextBox = tk.Text(self.contentFieldFrame, height=18, width=0, font=('Helvetica', self.fontSize), selectbackground='#FFFFAA', selectforeground='black',
+                                  relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollBar.set)
+        self.newTextBox = tk.Text(self.contentFieldFrame, height=18, width=0, font=('Helvetica', self.fontSize), selectbackground='#FFFFAA', selectforeground='black',
+                                  relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollBar.set)
+
+        self.newTextBox.configure(
+            xscrollcommand=self.contentHorizontalScrollBar.set)
+        self.oldTextBox.configure(
+            xscrollcommand=self.contentHorizontalScrollBar.set)
+
+        self.oldTextBox.debug(True)
+        self.newTextBox.debug(True)
 
         # Add tags for both boxes
         self.oldTextBox.tag_config(
@@ -309,6 +323,7 @@ class ReFile(tk.Frame):
 
     # Pack both text boxes and vertical scrollbar
     def renderTextBoxes(self):
+        self.contentHorizontalScrollBar.pack(side=tk.BOTTOM, fill=tk.X)
         self.contentVerticalScrollBar.pack(side=tk.RIGHT, fill=tk.Y)
 
         self.contentFieldFrame.pack(
@@ -545,7 +560,51 @@ class ReFile(tk.Frame):
 
     # Clear all styles
     def clearStyle(self, event=None):
-        pass
+        # Turn every thing off
+        self.underlineOnOff = False
+        self.strikethroughOnOff = False
+        self.highlightOnOff = False
+        self.paragraphMarkOnOff = False
+
+        # Change the check box image for all options
+        self.underlineCheckBox.config(image=self.toggleOffImg)
+        self.strikethroughCheckBox.config(image=self.toggleOffImg)
+        self.highlightCheckBox.config(image=self.toggleOffImg)
+        self.paragraphMarkCheckBox.config(image=self.toggleOffImg)
+
+        # Implement "Clear Style"
+        self.oldTextBox.tag_config(
+            '-1', overstrike=False, background='SystemWindow', selectbackground='#FFFFAA')
+        self.newTextBox.tag_config(
+            '1', underline=False, background='SystemWindow', selectbackground='#FFFFAA')
+
+        if self.diffs:
+            self.diffs = [(action, text.replace('¶\n', '\n'))
+                          for action, text in self.diffs]
+            self.modifyTextBoxes()
+
+        # Show status
+        self.statusLabel['text'] = 'All styles are cleared.'
+
+    # How to use message
+    def methodMessage(self):
+        title = 'ReFile'
+        message = 'If you want to know more information about how to use it, please press OK to open the GitHub repository.'
+        if messagebox.askokcancel(title, message):
+            # TODO: Change the link
+            webbrowser.open('https://github.com/franchottse')
+
+    # Release not message
+    def releaseNotesMessage(self):
+        title = 'Release Notes'
+        message = 'Version 1.0'
+        messagebox.showinfo(title, message)
+
+    # About message
+    def aboutMessage(self):
+        title = 'About ReFile'
+        message = 'ReFile is a Python GUI app which compares two inputs of text, and can output the difference between them with different formats.'
+        messagebox.showinfo(title, message)
 
     # Make sure the scrollbar works for the file list frame
     def onFileListFrameResizing(self, event=None):
@@ -661,7 +720,7 @@ class ReFile(tk.Frame):
                 tempFiles = tempFiles.split('\n')
                 self.xlFiles = [x for x in tempFiles if x.strip()]
                 print('File list:', self.xlFiles)
-        self.statusLabel['text'] = 'Welcome to ReFile! Please double click the file area or click Select File to add files.'
+        self.statusLabel['text'] = 'Welcome to ReFile! Please double click the file area to add files.'
 
     # Display contents
     def displayContents(self):
@@ -822,12 +881,15 @@ class ReFile(tk.Frame):
 
     # Modify both text boxes
     def modifyTextBoxes(self):
+        # Change both text boxes state to normal
         self.oldTextBox.config(state=tk.NORMAL)
         self.newTextBox.config(state=tk.NORMAL)
 
+        # Clear the contents for both boxes
         self.oldTextBox.delete(1.0, tk.END)
         self.newTextBox.delete(1.0, tk.END)
 
+        # Insert the text to both boxes
         for action, text in self.diffs:
             for char in text:
                 if action == -1:
@@ -840,14 +902,16 @@ class ReFile(tk.Frame):
                     self.oldTextBox.insert(tk.END, char)
                     self.newTextBox.insert(tk.END, char)
 
+        # Make the state back to disabled
         self.oldTextBox.config(state=tk.DISABLED)
         self.newTextBox.config(state=tk.DISABLED)
 
     def numHighlight(self):
+        # Reset the number of hightlights to avoid the miscalculation
         self.numDiff = 0
         for action, _ in self.diffs:
             self.numDiff += 1 if action != 0 else 0
-        #self.statusLabel['text'] = 'No. of Hightlights: ' + str(self.numDiff)
+        # self.statusLabel['text'] = 'No. of Hightlights: ' + str(self.numDiff)
 
     def displayFiles(self):
         print('File list:', self.xlFiles)
@@ -903,7 +967,7 @@ class ReFile(tk.Frame):
             textLabel.bind('<Double-Button-1>', lambda event,
                            filename=xlFile: self.onDoubleClicking(event, filename))
 
-            #label.bind('<Control-ButtonRelease-1>', self.selectMultiFiles)
+            # label.bind('<Control-ButtonRelease-1>', self.selectMultiFiles)
 
             img = ''
             if xlFile.lower().endswith(('.doc', '.docx')):
