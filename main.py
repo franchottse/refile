@@ -288,26 +288,23 @@ class ReFile(tk.Frame):
     # Text boxes
     def createTextBoxes(self):
         # Create vertical scrollbar for both text boxes
-        self.contentVerticalScrollBar = tk.Scrollbar(
+        self.contentVerticalScrollbar = tk.Scrollbar(
             self.contentFrame, orient=tk.VERTICAL, command=self.onContentVerticalScrolling)
 
         # Create horizontal scrollbar for both text boxes
-        self.contentHorizontalScrollBar = tk.Scrollbar(
+        self.contentHorizontalScrollbar = tk.Scrollbar(
             self.contentFrame, orient=tk.HORIZONTAL, command=self.onContentHorizontalScrolling)
 
         # Old and new text boxes
-        self.oldTextBox = tk.Text(self.contentFieldFrame, height=18, width=0, font=('Helvetica', self.fontSize), selectbackground='#FFFFAA', selectforeground='black',
-                                  relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollBar.set)
-        self.newTextBox = tk.Text(self.contentFieldFrame, height=18, width=0, font=('Helvetica', self.fontSize), selectbackground='#FFFFAA', selectforeground='black',
-                                  relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollBar.set)
+        self.oldTextBox = tk.Text(self.contentFieldFrame, height=18, width=1, font=('Helvetica', self.fontSize), selectbackground='#FFFFAA', selectforeground='black',
+                                  relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollbar.set)
+        self.newTextBox = tk.Text(self.contentFieldFrame, height=18, width=1, font=('Helvetica', self.fontSize), selectbackground='#FFFFAA', selectforeground='black',
+                                  relief=tk.SUNKEN, wrap=tk.WORD, state='disabled', yscrollcommand=self.contentVerticalScrollbar.set)
 
         self.newTextBox.configure(
-            xscrollcommand=self.contentHorizontalScrollBar.set)
+            xscrollcommand=self.contentHorizontalScrollbar.set)
         self.oldTextBox.configure(
-            xscrollcommand=self.contentHorizontalScrollBar.set)
-
-        self.oldTextBox.debug(True)
-        self.newTextBox.debug(True)
+            xscrollcommand=self.contentHorizontalScrollbar.set)
 
         # Add tags for both boxes
         self.oldTextBox.tag_config(
@@ -323,8 +320,8 @@ class ReFile(tk.Frame):
 
     # Pack both text boxes and vertical scrollbar
     def renderTextBoxes(self):
-        self.contentHorizontalScrollBar.pack(side=tk.BOTTOM, fill=tk.X)
-        self.contentVerticalScrollBar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.contentHorizontalScrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+        self.contentVerticalScrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         self.contentFieldFrame.pack(
             padx=5, pady=(0, 5), fill=tk.BOTH, expand=True)

@@ -104,10 +104,8 @@ The repo contains two executable files, one is installable, another one is of .E
     -   [x] Double-click to open file function
     -   [x] File name wrapper
 -   [x] Create button frame
-    -   [x] ~~Open File~~
     -   [x] Merge Text
     -   [x] Clear Contents
-    -   [x] ~~Clear All Files~~
 -   [ ] Create right click menu
     -   [ ] Delete file
     -   [ ] Properties
@@ -122,6 +120,7 @@ The repo contains two executable files, one is installable, another one is of .E
         -   [x] Clear Style
     -   [ ] Help
         -   [x] How to use
+        -   [x] Release notes
         -   [x] About ReFile
 -   [x] Create status bar frame
 
