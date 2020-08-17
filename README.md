@@ -115,7 +115,7 @@ The repo contains two executable files, one is installable, another one is of .E
         -   [x] Clear All
         -   [x] Exit
     -   [ ] Format
-        -   [x] ~~Word Wrap~~
+        -   [x] Word Wrap
         -   [x] Font Size
         -   [x] Clear Style
     -   [ ] Help
