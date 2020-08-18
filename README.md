@@ -85,13 +85,13 @@ The repo contains two executable files, one is installable, another one is of .E
             -   [x] Strikethrough Deletion
             -   [x] Highlight Insertion/Deletion
             -   [x] Show/Hide ¶
--   [ ] Create content frame
-    -   [ ] Scrollbars
+-   [x] Create content frame
+    -   [x] Scrollbars
     -   [x] Two text boxes
-    -   [ ] Pop-up window when clicking merge files button the data
-        -   [ ] Text box scrollbar frame
+    -   [x] Pop-up window when clicking merge files button the data
+        -   [x] Text box scrollbar frame
             -   [x] Text box
-            -   [ ] Scrollbars
+            -   [x] Scrollbars
         -   [x] Merge text result and button frame
             -   [x] Result label
             -   [x] Buttons
@@ -107,12 +107,16 @@ The repo contains two executable files, one is installable, another one is of .E
     -   [x] Merge Text
     -   [x] Clear Contents
 -   [ ] Create right click menu
-    -   [ ] Delete file
-    -   [ ] Properties
+    -   [ ] Open
+    -   [ ] Copy
+    -   [ ] Copy Path
+    -   [ ] Copy Relative Path
+    -   [ ] Delete
 -   [ ] Create menu bar
     -   [ ] File
         -   [x] Open
         -   [x] Clear All
+        -   [ ] Merge Text
         -   [x] Exit
     -   [ ] Format
         -   [x] Word Wrap
@@ -138,6 +142,7 @@ The repo contains two executable files, one is installable, another one is of .E
 -   [x] Bind function to "Save Output" for saving output text
 -   [x] Bind functions to deleting one or all files
 -   [x] Bind functions to all menu options
+-   [ ] Save settings when closing app
 
 <a name="convertion" />
 

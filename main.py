@@ -35,7 +35,6 @@ class ReFile(tk.Frame):
         self.style.configure('TFrame', background="#B5ACA8", padding=5)
         self.style.configure('Wild.TButton', background='white',
                              foreground='black', font=('Helvetica', 13))
-        # buttonStyle = {'padx': '10', 'pady': '5', 'fg': 'black', 'bg': 'white', 'activebackground': '#F5E7D7', 'activeforeground': 'black', 'bd': '2'}
         self.style.map('Wild.TButton', foreground=[
             ('active', 'black'),
             ('pressed', 'black'),
@@ -46,7 +45,6 @@ class ReFile(tk.Frame):
             ('pressed', '!disabled', '#ED5903'),
             ('disabled', 'white')
         ])
-        # self.style.configure("TEST.TLabel", foreground='white', background='black', font=(10))
         self.style.configure('Tab.TLabel', background='white', font=(
             'Helvetica', '11', 'bold'), relief=tk.SOLID, anchor=tk.CENTER)
         self.style.configure(
@@ -80,19 +78,13 @@ class ReFile(tk.Frame):
         self.numDiff = 0
 
         # Variable to check if the word wrapping option is on
-        #self.wordWrapBool = False
         self.wordWrapBool = tk.IntVar()
-        print('self.wordWrapBool.get() when creating:', self.wordWrapBool.get())
 
         # Variable to save the current font size
         self.fontSize = 12
 
         # Variable to save the current option of radio buttons for font size
         self.radioFontOption = tk.StringVar()
-
-        # Variables to save both vertical and horizontal less visible text name, it can be either 'old' or 'new'
-        self.lessVerticalVisible = 'old'
-        self.lessHorizontalVisible = 'old'
 
         # App setup
         self.configureGUI()
@@ -260,7 +252,7 @@ class ReFile(tk.Frame):
         self.fileMenu = Menu(self.menu, tearoff=False)
         self.menu.add_cascade(label='File', menu=self.fileMenu)
         self.fileMenu.add_command(
-            label='Open', accelerator='                    Ctrl+O', command=self.addFile)
+            label='Open File...', accelerator='                    Ctrl+O', command=self.addFile)
         self.fileMenu.add_command(
             label='Delete All', accelerator='                    Ctrl+D', command=self.clearAllFiles)
         self.fileMenu.add_separator()
@@ -304,9 +296,9 @@ class ReFile(tk.Frame):
 
         # Old and new text boxes
         self.oldTextBox = tk.Text(self.contentFieldFrame, height=18, width=1, font=('Helvetica', self.fontSize), selectbackground='#FFFFAA', selectforeground='black',
-                                  relief=tk.SUNKEN, wrap=tk.NONE, state='disabled', xscrollcommand=self.onLeftHorizontalTextChanging, yscrollcommand=self.onLeftVerticalTextChanging)
+                                  relief=tk.SUNKEN, wrap=tk.NONE, state='disabled', xscrollcommand=self.onHorizontalTextChanging, yscrollcommand=self.onVerticalTextChanging)
         self.newTextBox = tk.Text(self.contentFieldFrame, height=18, width=1, font=('Helvetica', self.fontSize), selectbackground='#FFFFAA', selectforeground='black',
-                                  relief=tk.SUNKEN, wrap=tk.NONE, state='disabled', xscrollcommand=self.onRightHorizontalTextChanging, yscrollcommand=self.onRightVerticalTextChanging)
+                                  relief=tk.SUNKEN, wrap=tk.NONE, state='disabled', xscrollcommand=self.onHorizontalTextChanging, yscrollcommand=self.onVerticalTextChanging)
 
         # Add tags for both boxes
         self.oldTextBox.tag_config(
@@ -320,10 +312,16 @@ class ReFile(tk.Frame):
         self.oldTextBox.bind('<MouseWheel>', self.onMouseWheeling)
         self.newTextBox.bind('<MouseWheel>', self.onMouseWheeling)
 
+        # Bind functions when clicking text box
+        self.oldTextBox.bind('<Button-1>', lambda event,
+                             option='left': self.selectTextBox(option))
+        self.newTextBox.bind('<Button-1>', lambda event,
+                             option='right': self.selectTextBox(option))
+
     # Pack both text boxes and vertical scrollbar
     def renderTextBoxes(self):
-        self.contentHorizontalScrollbar.pack(side=tk.BOTTOM, fill=tk.X)
         self.contentVerticalScrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.contentHorizontalScrollbar.pack(side=tk.BOTTOM, fill=tk.X)
 
         self.contentFieldFrame.pack(
             padx=5, pady=(0, 5), fill=tk.BOTH, expand=True)
@@ -530,25 +528,35 @@ class ReFile(tk.Frame):
 
         self.modifyTextBoxes()
 
-    # Update vertical scrollbar only when left box has less vertical visibility than right box
-    def onLeftVerticalTextChanging(self, *args):
-        if self.lessVerticalVisible == 'old':
-            self.contentVerticalScrollbar.set(*args)
+    # Updating vertical scrollbar
+    def onVerticalTextChanging(self, first=None, last=None):
+        # Get the both text boxes yview values
+        old_yview = self.oldTextBox.yview()
+        new_yview = self.newTextBox.yview()
+        print('old_yview:', old_yview)
+        print('new_yview:', new_yview)
 
-    # Update vertical scrollbar only when right box has less vertical visibility than left box
-    def onRightVerticalTextChanging(self, *args):
-        if self.lessVerticalVisible == 'new':
-            self.contentVerticalScrollbar.set(*args)
+        # Update scrollbar depending on less vertical visibility
+        yview = old_yview if abs(
+            old_yview[1]-old_yview[0]) <= abs(new_yview[1]-new_yview[0]) else new_yview
 
-    # Update horizontal scrollbar only when left box has less horizontal visibility than right box
-    def onLeftHorizontalTextChanging(self, *args):
-        if self.lessHorizontalVisible == 'old':
-            self.contentHorizontalScrollbar.set(*args)
+        # Update vertical scrollbar
+        self.contentVerticalScrollbar.set(*yview)
 
-    # Update horizontal scrollbar only when right box has less horizontal visibility than left box
-    def onRightHorizontalTextChanging(self, *args):
-        if self.lessHorizontalVisible == 'new':
-            self.contentHorizontalScrollbar.set(*args)
+    # Updating horizontal scrollbar
+    def onHorizontalTextChanging(self, first=None, last=None):
+        # Get the both text boxes xview values
+        old_xview = self.oldTextBox.xview()
+        new_xview = self.newTextBox.xview()
+        print('old_xview:', old_xview)
+        print('new_xview:', new_xview)
+
+        # Update scrollbar depending on less horizontal visibility
+        xview = old_xview if abs(
+            old_xview[1]-old_xview[0]) <= abs(new_xview[1]-new_xview[0]) else new_xview
+
+        # Update horizontal scrollbar
+        self.contentHorizontalScrollbar.set(*xview)
 
     # Contents vertical scrollbar function
     def onContentVerticalScrolling(self, *args):
@@ -568,20 +576,14 @@ class ReFile(tk.Frame):
 
     # Word wrapping
     def wordWrap(self):
-        print('self.wordWrapBool.get():', self.wordWrapBool.get())
-        #self.wordWrapBool.set(1 if self.wordWrapBool.get() == 0 else 0)
         if self.wordWrapBool.get() == 1 and self.contentHorizontalScrollbar.winfo_ismapped():
             self.oldTextBox.config(wrap=tk.WORD)
             self.newTextBox.config(wrap=tk.WORD)
             self.contentHorizontalScrollbar.pack_forget()
-            print('contentHorizontalScrollbar pack_forget')
         elif self.wordWrapBool.get() == 0 and not self.contentHorizontalScrollbar.winfo_ismapped():
             self.oldTextBox.config(wrap=tk.NONE)
             self.newTextBox.config(wrap=tk.NONE)
             self.contentHorizontalScrollbar.pack(side=tk.BOTTOM, fill=tk.X)
-            print('contentHorizontalScrollbar pack')
-        self.master.update_idletasks()
-        self.updateViewVisibility()
 
     # Change font size
     def changeFont(self):
@@ -593,6 +595,12 @@ class ReFile(tk.Frame):
         self.oldTextBox.config(font=('Helvetica', size))
         self.newTextBox.config(font=('Helvetica', size))
         self.fontSize = size
+        dimension = 690
+        if size == 14:
+            dimension = 745
+        elif size == 16:
+            dimension = 780
+        self.master.minsize(dimension, dimension)
 
     # Clear all styles
     def clearStyle(self, event=None):
@@ -633,7 +641,7 @@ class ReFile(tk.Frame):
     # Release not message
     def releaseNotesMessage(self):
         title = 'Release Notes'
-        message = 'Version 1.0'
+        message = 'Version: 1.0'
         messagebox.showinfo(title, message)
 
     # About message
@@ -845,24 +853,34 @@ class ReFile(tk.Frame):
         self.mergeWindow.focus_set()
 
         # Merge text box
-        self.mergeTextBox = tk.Text(self.mergeFrame, width=70, height=12, font=(
-            'Helvetica', self.fontSize), selectbackground='#FFFFAA', selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD)
+        self.mergeTextBox = tk.Text(self.mergeFrame, width=70, height=12, font=('Helvetica', self.fontSize), selectbackground='#FFFFAA',
+                                    selectforeground='black', relief=tk.SUNKEN, wrap=tk.WORD if self.wordWrapBool.get() == 1 else tk.NONE)
         self.mergeTextBox.tag_config('-1', overstrike=self.strikethroughOnOff, background='#FFAAAA' if self.highlightOnOff else 'SystemWindow',
                                      selectbackground='#FFAAAA' if self.highlightOnOff else '#FFFFAA')
         self.mergeTextBox.tag_config('1', underline=self.underlineOnOff, background='#AAFFAA' if self.highlightOnOff else 'SystemWindow',
                                      selectbackground='#AAFFAA' if self.highlightOnOff else '#FFFFAA')
         self.mergeText()
-        self.mergeTextBox.pack(padx=(5, 0), pady=5,
-                               side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Vertical scrollbar
-        self.mergeVerticalScrollBar = ttk.Scrollbar(
+        self.mergeVerticalScrollbar = ttk.Scrollbar(
             self.mergeFrame, orient=tk.VERTICAL, command=self.mergeTextBox.yview)
         self.mergeTextBox.configure(
-            yscrollcommand=self.mergeVerticalScrollBar.set)
-        self.mergeVerticalScrollBar.pack(
-            padx=(0, 5), side=tk.RIGHT, pady=5, fill=tk.Y)
+            yscrollcommand=self.mergeVerticalScrollbar.set)
+        self.mergeVerticalScrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
+        # Horizontal scrollbar
+        if self.wordWrapBool.get() == 0:
+            self.mergeHorizontalScrollbar = ttk.Scrollbar(
+                self.mergeFrame, orient=tk.HORIZONTAL, command=self.mergeTextBox.xview)
+            self.mergeTextBox.configure(
+                xscrollcommand=self.mergeHorizontalScrollbar.set)
+            self.mergeHorizontalScrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+
+        # Pack text widget after scrollbar(s) is packed
+        self.mergeTextBox.pack(
+            padx=5, pady=5, side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Button Frame
         self.mergeResultButtonFrame = tk.Frame(self.mergeWindow, bg='#FFEAAA')
         self.mergeResultButtonFrame.pack(
             padx=5, pady=(0, 5), fill=tk.X)
@@ -938,27 +956,9 @@ class ReFile(tk.Frame):
                     self.oldTextBox.insert(tk.END, char)
                     self.newTextBox.insert(tk.END, char)
 
-        self.updateViewVisibility()
-
         # Make the state back to disabled
         self.oldTextBox.config(state=tk.DISABLED)
         self.newTextBox.config(state=tk.DISABLED)
-
-    def updateViewVisibility(self):
-        # Update whole app before getting yview and xview
-        self.master.update()
-
-        print('self.oldTextBox.yview()[1]:', self.oldTextBox.yview()[1])
-        print('self.newTextBox.yview()[1]:', self.newTextBox.yview()[1])
-        print('self.oldTextBox.xview()[1]:', self.oldTextBox.xview()[1])
-        print('self.newTextBox.xview()[1]:', self.newTextBox.xview()[1])
-        # Update vertical scrollbar depending on less vertically visible text box
-        self.lessVerticalVisible = 'old' if self.oldTextBox.yview(
-        )[1] <= self.newTextBox.yview()[1] else 'new'
-
-        # Update horizontal scrollbar depending on less horizontally visible text box
-        self.lessHorizontalVisible = 'old' if self.oldTextBox.xview(
-        )[1] <= self.newTextBox.xview()[1] else 'new'
 
     def numHighlight(self):
         # Reset the number of hightlights to avoid the miscalculation
@@ -1105,8 +1105,6 @@ class ReFile(tk.Frame):
 
         self.master.update()
         self.fileListFrame.config(width=1)
-
-    # TODO: Solve the problem of passing arguments to other python files for text files
 
 
 if __name__ == '__main__':
