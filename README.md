@@ -142,7 +142,7 @@ The repo contains two executable files, one is installable, another one is of .E
 -   [x] Bind function to "Save Output" for saving output text
 -   [x] Bind functions to deleting one or all files
 -   [x] Bind functions to all menu options
--   [ ] Save settings when closing app
+-   [x] Save settings when closing app
 
 <a name="convertion" />
 

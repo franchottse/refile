@@ -10,7 +10,7 @@ import webbrowser
 class ReFile(tk.Frame):
 
     def __init__(self, master):
-        self.xlFiles = []
+        self.docFiles = []
         self.master = master
         super().__init__()
         # tk.Frame.__init__(self, self.master)
@@ -55,9 +55,8 @@ class ReFile(tk.Frame):
         # Variable to avoid packing file scrollbar repeatedly
         self.initializing = True
 
-        # Variables to save the selected file(s) by the user
+        # Variables to save the selected file by the user
         self.selectedFile = ''
-        self.selectedMultiFiles = []
 
         # Variable to save the file label
         self.fileLabelList = []
@@ -85,6 +84,13 @@ class ReFile(tk.Frame):
 
         # Variable to save the current option of radio buttons for font size
         self.radioFontOption = tk.StringVar()
+        self.radioFontOption.set('12 points')
+
+        # Variable to store the current selected files for both text boxes, key: text box; values: filename, widget
+        self.fileTextBox = {'new': ['', None], 'old': ['', None]}
+
+        # Load the previous settings
+        self.loadSettings()
 
         # App setup
         self.configureGUI()
@@ -93,6 +99,10 @@ class ReFile(tk.Frame):
         self.displayFiles()
         self.initializing = False
         self.onFileListFrameResizing()
+
+        # Keep or remove horizontal scrollbar after packing every thing
+        if os.path.isfile('settings.txt'):
+            self.wordWrap()
 
     # TODO: Beautify the layout of the GUI
     def configureGUI(self):
@@ -197,6 +207,24 @@ class ReFile(tk.Frame):
         self.statusLabel = ttk.Label(
             self.statusFrame, text='Welcome to ReFile! Please double click the file area to add files', style='Status.TLabel')
 
+        # Execute the previous settings
+        if os.path.isfile('settings.txt'):
+            # Make sure the settings will not be toggled when calling methods
+            self.underlineOnOff = not self.underlineOnOff
+            self.strikethroughOnOff = not self.strikethroughOnOff
+            self.highlightOnOff = not self.highlightOnOff
+            self.paragraphMarkOnOff = not self.paragraphMarkOnOff
+            text_box = 'left' if self.selectedTextBox == 'old' else 'right'
+            self.selectedTextBox = 'old' if self.selectedTextBox == 'new' else 'new'
+
+            # Call methods to preset the options
+            self.underlineInsertion()
+            self.strikethroughDeleteion()
+            self.highlightDifferece()
+            self.paragraphMark()
+            self.selectTextBox(text_box)
+            self.changeFont()
+
     # Pack and grid everything
     def createWidgets(self):
         # Menu
@@ -234,7 +262,6 @@ class ReFile(tk.Frame):
         self.openFile.grid(row=0, column=0, padx=5, pady=5)
 
         # Clear files button
-        # tk.Button(self.buttonFrame, text="Show scores", **buttonStyle,command=self.show).grid(row=0, column=1, padx=5, pady=5, sticky=tk.N+tk.S+tk.E+tk.W)
         self.clearContent.grid(row=0, column=1, padx=5, pady=5,
                                sticky=tk.N+tk.S+tk.E+tk.W)
 
@@ -268,7 +295,6 @@ class ReFile(tk.Frame):
         for item in (12, 14, 16):
             self.fontSubmenu.add_radiobutton(label='{} points'.format(
                 item), variable=self.radioFontOption, value='{} points'.format(item), command=self.changeFont)
-        self.radioFontOption.set('12 points')
 
         self.formatMenu.add_command(
             label='Clear Style', accelerator='      ', command=self.clearStyle)
@@ -476,9 +502,11 @@ class ReFile(tk.Frame):
             self.leftRadioButton.config(image=self.uncheckedRadioImg)
             self.rightRadioButton.config(image=self.checkedRadioImg)
             self.statusLabel['text'] = 'Right text box selected.'
+        self.highlightFile(
+            self.fileTextBox[self.selectedTextBox][1], self.fileTextBox[self.selectedTextBox][0], False)
 
     # Underline insertion
-    def underlineInsertion(self, event):
+    def underlineInsertion(self, event=None):
         self.underlineOnOff = not self.underlineOnOff
         self.underlineCheckBox.config(
             image=self.toggleOnImg) if self.underlineOnOff else self.underlineCheckBox.config(image=self.toggleOffImg)
@@ -488,7 +516,7 @@ class ReFile(tk.Frame):
         self.statusLabel['text'] = 'Underline insertion ' + on_off + '.'
 
     # Strikethrough deletion
-    def strikethroughDeleteion(self, event):
+    def strikethroughDeleteion(self, event=None):
         self.strikethroughOnOff = not self.strikethroughOnOff
         self.strikethroughCheckBox.config(
             image=self.toggleOnImg) if self.strikethroughOnOff else self.strikethroughCheckBox.config(image=self.toggleOffImg)
@@ -498,7 +526,7 @@ class ReFile(tk.Frame):
         self.statusLabel['text'] = 'Strikethrough deletion ' + on_off + '.'
 
     # Highlight insertion/deletion
-    def highlightDifferece(self, event):
+    def highlightDifferece(self, event=None):
         self.highlightOnOff = not self.highlightOnOff
         self.highlightCheckBox.config(
             image=self.toggleOnImg) if self.highlightOnOff else self.highlightCheckBox.config(image=self.toggleOffImg)
@@ -511,7 +539,7 @@ class ReFile(tk.Frame):
         self.statusLabel['text'] = 'Highlight insertion/deletion ' + on_off + '.'
 
     # Show/Hide ¶
-    def paragraphMark(self, event):
+    def paragraphMark(self, event=None):
         self.paragraphMarkOnOff = not self.paragraphMarkOnOff
         self.paragraphMarkCheckBox.config(
             image=self.toggleOnImg) if self.paragraphMarkOnOff else self.paragraphMarkCheckBox.config(image=self.toggleOffImg)
@@ -565,6 +593,7 @@ class ReFile(tk.Frame):
 
     # Mouse wheel event for vertical scrolling
     def onMouseWheeling(self, event):
+        print(event)
         self.oldTextBox.yview_scroll(-1*(event.delta//120), tk.UNITS)
         self.newTextBox.yview_scroll(-1*(event.delta//120), tk.UNITS)
         return 'break'
@@ -588,6 +617,7 @@ class ReFile(tk.Frame):
     # Change font size
     def changeFont(self):
         size = 12
+        print('self.radioFontOption.get():', self.radioFontOption.get())
         if self.radioFontOption.get() == '14 points':
             size = 14
         elif self.radioFontOption.get() == '16 points':
@@ -697,23 +727,40 @@ class ReFile(tk.Frame):
 
     # Mouse release event for highlighting a file when clicked
     def onReleasing(self, event, outLabel, filename):
-        if outLabel.cget('state') != 'DISABLED':
-            for widget in self.fileLabelList:
-                if widget.cget('state') == 'DISABLED':
-                    widget.config(
-                        background=self.fileBackgroundColour, state='NORMAL')
-                    for child in widget.winfo_children():
-                        child.config(background=self.fileBackgroundColour)
+        if outLabel.cget('state') == 'DISABLED':
+            return
 
-            self.selectedFile = filename
-            self.statusLabel['text'] = os.path.basename(
-                filename) + ' selected.'
-            outLabel.config(
-                background=self.fileHoverHightlightColour, state='DISABLED')
-            for child in outLabel.winfo_children():
-                child.config(background=self.fileHoverHightlightColour)
+        self.highlightFile(outLabel, filename, True)
 
+        # Show the message in the status bar
+        self.statusLabel['text'] = os.path.basename(filename) + ' selected.'
+
+        # Save the file name and the widget for text boxes
+        self.fileTextBox[self.selectedTextBox][0] = filename
+        self.fileTextBox[self.selectedTextBox][1] = outLabel
+
+        # Display text
         self.displayContents()
+
+    # Highlight the background of a selected file
+    def highlightFile(self, outLabel, filename, onRelease):
+        # Unhighlight the previous selected file
+        for widget in self.fileLabelList:
+            if widget.cget('state') == 'DISABLED':
+                widget.config(
+                    background=self.fileBackgroundColour, state='NORMAL')
+                for child in widget.winfo_children():
+                    child.config(background=self.fileBackgroundColour)
+
+        if outLabel != None:
+            # Highlight the currrent selected file
+            colour = self.fileHoverHightlightColour if onRelease else self.fileHighlightColour
+            outLabel.config(background=colour, state='DISABLED')
+            for child in outLabel.winfo_children():
+                child.config(background=colour)
+
+        # Change the selected file
+        self.selectedFile = filename
 
     # Mouse double click event for opening a file
     def onDoubleClicking(self, event, filename):
@@ -736,35 +783,35 @@ class ReFile(tk.Frame):
         else:
             self.statusLabel['text'] = ''
 
-    # Test function for selecting some files to delete
-    def selectMultiFiles(self, event=None):
-        if not event.widget.cget('text') in self.selectedMultiFiles:
-            self.selectedMultiFiles.append(event.widget.cget('text'))
-            self.statusLabel['text'] = str(
-                len(self.selectedMultiFiles)) + ' file(s) selected.'
-
     # File name wrapper
     def filenameWrapper(self, filename):
         # File name must be in full path
         return os.path.basename(filename) if len(os.path.basename(filename)) < 21 else os.path.basename(filename)[:20]+'...'
 
     def isFile(self):
-        if os.path.isfile('xlList.txt'):
-            with open('xlList.txt', 'r') as f:
+        if os.path.isfile('docList.txt'):
+            with open('docList.txt', 'r') as f:
                 tempFiles = f.read()
                 print(tempFiles)
             return True
         return False
 
+    # Load saved files
     def loadSavedList(self):
         self.statusLabel['text'] = 'Loading previous saved list'
-        if os.path.isfile('xlList.txt'):
-            with open('xlList.txt', 'r', encoding='utf-8') as f:
+        if os.path.isfile('docList.txt'):
+            with open('docList.txt', 'r', encoding='utf-8') as f:
                 tempFiles = f.read()
                 tempFiles = tempFiles.split('\n')
-                self.xlFiles = [x for x in tempFiles if x.strip()]
-                print('File list:', self.xlFiles)
+                self.docFiles = [x for x in tempFiles if x.strip()]
+                print('File list:', self.docFiles)
         self.statusLabel['text'] = 'Welcome to ReFile! Please double click the file area to add files.'
+
+    # Load previous settings
+    def loadSettings(self):
+        if os.path.isfile('settings.txt'):
+            settings = open('settings.txt').read()
+            exec(settings)
 
     # Display contents
     def displayContents(self):
@@ -816,6 +863,10 @@ class ReFile(tk.Frame):
         self.newTextBox.config(state=tk.DISABLED)
         self.diffs = None
         self.numDiff = 0
+        for _, info in self.fileTextBox.items():
+            info[0] = ''
+            info[1] = None
+        self.highlightFile(None, '', False)
 
     # Merge result pop-up window
     def mergePopup(self, event=None):
@@ -967,22 +1018,28 @@ class ReFile(tk.Frame):
             self.numDiff += 1 if action != 0 else 0
 
     def displayFiles(self):
-        print('File list:', self.xlFiles)
-        for xlFile in self.xlFiles:
+        print('File list:', self.docFiles)
+        for docFile in self.docFiles:
             label = ttk.Label(self.fileListFrame,
                               style='File.TLabel', takefocus=True)
             imageCanvas = tk.Canvas(
                 label, width=100, height=100, highlightthickness=0)
             textLabel = ttk.Label(label, text=self.filenameWrapper(
-                xlFile), style='File.TLabel', anchor=tk.CENTER, wraplength=140)
+                docFile), style='File.TLabel', anchor=tk.CENTER, wraplength=140)
+            # Append label to the file label list
             self.fileLabelList.append(label)
 
-            # Highlight the selected file again after adding files
-            if xlFile == self.selectedFile:
+            # Highlight the selected file again when adding files
+            if docFile == self.selectedFile:
                 label.config(background=self.fileHighlightColour,
                              state='DISABLED')
                 for child in label.winfo_children():
                     child.config(background=self.fileHighlightColour)
+
+            # Reassign the labels to the dict
+            for _, info in self.fileTextBox.items():
+                if info[0] == docFile:
+                    info[1] = label
 
             # Bind label to onEntering
             label.bind('<Enter>', self.onEntering)
@@ -1002,30 +1059,28 @@ class ReFile(tk.Frame):
 
             # Bind label, imageCanvas and textLabel to onReleasing
             label.bind('<ButtonRelease-1>', lambda event, outLabel=label,
-                       filename=xlFile: self.onReleasing(event, outLabel, filename))
+                       filename=docFile: self.onReleasing(event, outLabel, filename))
             label.bind('<Return>', lambda event, outLabel=label,
-                       filename=xlFile: self.onReleasing(event, outLabel, filename))
+                       filename=docFile: self.onReleasing(event, outLabel, filename))
             imageCanvas.bind('<ButtonRelease-1>', lambda event, outLabel=label,
-                             filename=xlFile: self.onReleasing(event, outLabel, filename))
+                             filename=docFile: self.onReleasing(event, outLabel, filename))
             textLabel.bind('<ButtonRelease-1>', lambda event, outLabel=label,
-                           filename=xlFile: self.onReleasing(event, outLabel, filename))
+                           filename=docFile: self.onReleasing(event, outLabel, filename))
 
             # Bind label, imageCanvas and textLabel to onDoubleClicking
             label.bind('<Double-Button-1>', lambda event,
-                       filename=xlFile: self.onDoubleClicking(event, filename))
+                       filename=docFile: self.onDoubleClicking(event, filename))
             label.bind('<Control-Return>', lambda event,
-                       filename=xlFile: self.onDoubleClicking(event, filename))
+                       filename=docFile: self.onDoubleClicking(event, filename))
             imageCanvas.bind('<Double-Button-1>', lambda event,
-                             filename=xlFile: self.onDoubleClicking(event, filename))
+                             filename=docFile: self.onDoubleClicking(event, filename))
             textLabel.bind('<Double-Button-1>', lambda event,
-                           filename=xlFile: self.onDoubleClicking(event, filename))
-
-            # label.bind('<Control-ButtonRelease-1>', self.selectMultiFiles)
+                           filename=docFile: self.onDoubleClicking(event, filename))
 
             img = ''
-            if xlFile.lower().endswith(('.doc', '.docx')):
+            if docFile.lower().endswith(('.doc', '.docx')):
                 img = self.wordIcon
-            elif xlFile.lower().endswith('.pdf'):
+            elif docFile.lower().endswith('.pdf'):
                 img = self.pdfIcon
             else:
                 img = self.textIcon
@@ -1044,11 +1099,17 @@ class ReFile(tk.Frame):
         if self.selectedFile == '':
             return
 
-        # Find target widget and file name to remove from file label list and xlFiles
+        # Find target widget and file name to remove from file label list and docFiles
         for label in self.fileLabelList:
             if label.cget('state') == 'DISABLED':
                 self.fileLabelList.remove(label)
-                self.xlFiles.remove(self.selectedFile)
+                self.docFiles.remove(self.selectedFile)
+
+        # Change the file name and the widget no matter what the text box is
+        for _, info in self.fileTextBox.items():
+            if info[0] == self.selectedFile:
+                info[0] = ''
+                info[1] = None
 
         # Destroy widget from GUI
         for outLabel in self.fileListFrame.winfo_children():
@@ -1075,10 +1136,10 @@ class ReFile(tk.Frame):
                                                 ('Adobe PDF', '.pdf')])
 
         for file in files:
-            if file not in self.xlFiles and file != '':
-                self.xlFiles.append(file)
+            if file not in self.docFiles and file != '':
+                self.docFiles.append(file)
                 print('New file: ' + file)
-            '''elif file in self.xlFiles:
+            '''elif file in self.docFiles:
                 self.statusLabel['text'] = 'There is at least a file added before.'
                 messagebox.showinfo(
                     'ReFile', 'There is at least a file added before.')
@@ -1095,10 +1156,10 @@ class ReFile(tk.Frame):
 
     # Clear all files
     def clearAllFiles(self, event=None):
-        if self.xlFiles and not messagebox.askyesno('ReFile', 'Do you really want to delete all files?'):
+        if self.docFiles and not messagebox.askyesno('ReFile', 'Do you really want to delete all files?'):
             return
 
-        self.xlFiles.clear()
+        self.docFiles.clear()
         self.fileLabelList.clear()
         for widget in self.fileListFrame.winfo_children():
             widget.destroy()
@@ -1113,6 +1174,21 @@ if __name__ == '__main__':
     root.protocol('WM_DELETE_WINDOW', mainApp.onClosingWindow)
     root.mainloop()
 
-    with open('xlList.txt', 'w', encoding='utf-8') as f:
-        for xlFile in mainApp.xlFiles:
-            f.write(xlFile + '\n')
+    with open('docList.txt', 'w', encoding='utf-8') as f:
+        for docFile in mainApp.docFiles:
+            f.write(docFile + '\n')
+
+    with open('settings.txt', 'w', encoding='utf-8') as f:
+        f.write('self.underlineOnOff = ' + str(mainApp.underlineOnOff) + '\n')
+        f.write('self.strikethroughOnOff = ' +
+                str(mainApp.strikethroughOnOff) + '\n')
+        f.write('self.highlightOnOff = ' + str(mainApp.highlightOnOff) + '\n')
+        f.write('self.paragraphMarkOnOff = ' +
+                str(mainApp.paragraphMarkOnOff) + '\n')
+        f.write('self.selectedTextBox = \'' +
+                mainApp.selectedTextBox + '\'' + '\n')
+        f.write('self.wordWrapBool.set(' +
+                str(mainApp.wordWrapBool.get()) + ')' + '\n')
+        f.write('self.radioFontOption.set(\'' +
+                mainApp.radioFontOption.get() + '\')' + '\n')
+        f.write('self.fontSize = ' + str(mainApp.fontSize) + '\n')
