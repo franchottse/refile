@@ -106,23 +106,23 @@ The repo contains two executable files, one is installable, another one is of .E
 -   [x] Create button frame
     -   [x] Merge Text
     -   [x] Clear Contents
--   [ ] Create right click menu
-    -   [ ] Open
-    -   [ ] Copy
-    -   [ ] Copy Path
-    -   [ ] Copy Relative Path
-    -   [ ] Delete
--   [ ] Create menu bar
-    -   [ ] File
+-   [x] Create right click menu
+    -   [x] Open
+    -   [x] Copy Text
+    -   [x] Copy Path
+    -   [x] Copy Relative Path
+    -   [x] Delete
+-   [x] Create menu bar
+    -   [x] File
         -   [x] Open
         -   [x] Clear All
-        -   [ ] Merge Text
+        -   [x] Merge Text
         -   [x] Exit
-    -   [ ] Format
+    -   [x] Format
         -   [x] Word Wrap
         -   [x] Font Size
         -   [x] Clear Style
-    -   [ ] Help
+    -   [x] Help
         -   [x] How to use
         -   [x] Release notes
         -   [x] About ReFile

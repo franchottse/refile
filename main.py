@@ -3,6 +3,7 @@ from tkinter import filedialog, Text, messagebox, ttk, Menu
 from PIL import Image, ImageTk
 from diff_match_patch import diff_match_patch
 import os
+import pyperclip
 import func
 import webbrowser
 
@@ -14,9 +15,11 @@ class ReFile(tk.Frame):
         self.master = master
         super().__init__()
         # tk.Frame.__init__(self, self.master)
+        # Bind the main keys
         self.master.bind('<Delete>', self.deleteFile)
         self.master.bind('<Control-o>', self.addFile)
         self.master.bind('<Control-d>', self.clearAllFiles)
+        self.master.bind('<Control-m>', self.mergePopup)
 
         # Style setup
         self.width = 1200
@@ -282,6 +285,8 @@ class ReFile(tk.Frame):
             label='Open File...', accelerator='                    Ctrl+O', command=self.addFile)
         self.fileMenu.add_command(
             label='Delete All', accelerator='                    Ctrl+D', command=self.clearAllFiles)
+        self.fileMenu.add_command(
+            label='Merge Text', accelerator='                    Ctrl+M', command=self.mergePopup)
         self.fileMenu.add_separator()
         self.fileMenu.add_command(label='Exit', command=self.onClosingWindow)
 
@@ -309,6 +314,52 @@ class ReFile(tk.Frame):
         self.helpMenu.add_separator()
         self.helpMenu.add_command(
             label='About ReFile', command=self.aboutMessage)
+
+        # Create right click menu for files
+        # self.createRightClickMenu()
+
+    # Right click menu for files
+    def createRightClickMenu(self, event, filename, outLabel):
+        self.rightClickMenu = Menu(self.master, tearoff=0)
+        self.rightClickMenu.add_command(
+            label='Open', accelerator='        Ctrl+Enter', command=lambda: self.onDoubleClicking(event, filename))
+        self.rightClickMenu.add_command(
+            label='Copy Text', accelerator='        Ctrl+C', command=lambda: pyperclip.copy(func.importFile(filename)))
+        self.rightClickMenu.add_separator()
+        self.rightClickMenu.add_command(
+            label='Copy Path', accelerator='        Shift+Alt+C', command=lambda: pyperclip.copy(filename))
+        self.rightClickMenu.add_command(label='Copy Relative Path', accelerator='        Ctrl+Shift+C',
+                                        command=lambda: pyperclip.copy(os.path.basename(filename)))
+        self.rightClickMenu.add_separator()
+        self.rightClickMenu.add_command(
+            label='Delete', accelerator='        Delete', command=lambda: self.onDeleting(filename, outLabel))
+
+        # Menu pop up
+        try:
+            self.rightClickMenu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.rightClickMenu.grab_release()
+
+    # Copy text
+    def copyText(self, event, filename):
+        pyperclip.copy(func.importFile(filename))
+
+    # Copy path
+    def copyPath(self, event, filename):
+        pyperclip.copy(filename)
+
+    # Copy relative path
+    def copyRelativePath(self, event, filename):
+        pyperclip.copy(os.path.basename(filename))
+
+    # Delete file using right click menu
+    def onDeleting(self, filename, outLabel):
+        origin_file = self.selectedFile
+        self.highlightFile(outLabel, filename, False)
+        self.deleteFile()
+        for _, info in self.fileTextBox.items():
+            if info[0] == origin_file:
+                self.highlightFile(info[1], info[0], False)
 
     # Text boxes
     def createTextBoxes(self):
@@ -561,8 +612,6 @@ class ReFile(tk.Frame):
         # Get the both text boxes yview values
         old_yview = self.oldTextBox.yview()
         new_yview = self.newTextBox.yview()
-        print('old_yview:', old_yview)
-        print('new_yview:', new_yview)
 
         # Update scrollbar depending on less vertical visibility
         yview = old_yview if abs(
@@ -576,8 +625,6 @@ class ReFile(tk.Frame):
         # Get the both text boxes xview values
         old_xview = self.oldTextBox.xview()
         new_xview = self.newTextBox.xview()
-        print('old_xview:', old_xview)
-        print('new_xview:', new_xview)
 
         # Update scrollbar depending on less horizontal visibility
         xview = old_xview if abs(
@@ -617,7 +664,6 @@ class ReFile(tk.Frame):
     # Change font size
     def changeFont(self):
         size = 12
-        print('self.radioFontOption.get():', self.radioFontOption.get())
         if self.radioFontOption.get() == '14 points':
             size = 14
         elif self.radioFontOption.get() == '16 points':
@@ -671,13 +717,13 @@ class ReFile(tk.Frame):
     # Release not message
     def releaseNotesMessage(self):
         title = 'Release Notes'
-        message = 'Version: 1.0'
+        message = 'Version: 1.0\nThis is the first version of ReFile'
         messagebox.showinfo(title, message)
 
     # About message
     def aboutMessage(self):
         title = 'About ReFile'
-        message = 'ReFile is a Python GUI app which compares two inputs of text, and can output the difference between them with different formats.'
+        message = 'ReFile is a Python GUI app which compares two inputs of text, and outputs the difference between them with different formats.'
         messagebox.showinfo(title, message)
 
     # Make sure the scrollbar works for the file list frame
@@ -804,7 +850,7 @@ class ReFile(tk.Frame):
                 tempFiles = f.read()
                 tempFiles = tempFiles.split('\n')
                 self.docFiles = [x for x in tempFiles if x.strip()]
-                print('File list:', self.docFiles)
+                print('Saved list:', self.docFiles)
         self.statusLabel['text'] = 'Welcome to ReFile! Please double click the file area to add files.'
 
     # Load previous settings
@@ -1076,6 +1122,22 @@ class ReFile(tk.Frame):
                              filename=docFile: self.onDoubleClicking(event, filename))
             textLabel.bind('<Double-Button-1>', lambda event,
                            filename=docFile: self.onDoubleClicking(event, filename))
+
+            # Right click menu
+            label.bind('<ButtonRelease-3>', lambda event, outLabel=label,
+                       filename=docFile: self.createRightClickMenu(event, filename, outLabel))
+            imageCanvas.bind('<ButtonRelease-3>', lambda event, outLabel=label,
+                             filename=docFile: self.createRightClickMenu(event, filename, outLabel))
+            textLabel.bind('<ButtonRelease-3>', lambda event, outLabel=label,
+                           filename=docFile: self.createRightClickMenu(event, filename, outLabel))
+
+            # Copy text, path and relative path
+            label.bind('<Control-c>', lambda event,
+                       filename=docFile: self.copyText(event, filename))
+            label.bind('<Alt-Shift-C>', lambda event,
+                       filename=docFile: self.copyPath(event, filename))
+            label.bind('<Control-Shift-C>', lambda event,
+                       filename=docFile: self.copyRelativePath(event, filename))
 
             img = ''
             if docFile.lower().endswith(('.doc', '.docx')):

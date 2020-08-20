@@ -13,8 +13,6 @@ from win32com.client import Dispatch
 
 # This code is mainly for reading and outputing files
 
-# TODO: Try to handle exceptions
-
 
 # Read file
 def importFile(path):
