@@ -127,6 +127,12 @@ The repo contains two executable files, one is installable, another one is of .E
         -   [x] Release notes
         -   [x] About ReFile
 -   [x] Create status bar frame
+-   [x] Create tooltips
+    -   [x] Left Text Box
+    -   [x] Right Text Box
+    -   [x] Files
+    -   [x] Merge Text button
+    -   [x] Clear Contents button
 
 <a name="back-end" />
 

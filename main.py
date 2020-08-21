@@ -4,8 +4,9 @@ from PIL import Image, ImageTk
 from diff_match_patch import diff_match_patch
 import os
 import pyperclip
-import func
 import webbrowser
+import func
+from Tooltip import *
 
 
 class ReFile(tk.Frame):
@@ -91,6 +92,11 @@ class ReFile(tk.Frame):
 
         # Variable to store the current selected files for both text boxes, key: text box; values: filename, widget
         self.fileTextBox = {'new': ['', None], 'old': ['', None]}
+
+        # Variable to store the type of file
+        self.docType = {'.docx': 'Microsoft Word Document',
+                        '.pdf': 'Adobe Acrobat Document',
+                        '.txt': 'Text Document'}
 
         # Load the previous settings
         self.loadSettings()
@@ -196,14 +202,29 @@ class ReFile(tk.Frame):
         self.buttonFrame = tk.Frame(self.master, bg='#FFEAAA')
 
         # Select File button
-        self.openFile = ttk.Button(
+        self.mergeButton = ttk.Button(
             self.buttonFrame, text='Merge Text', style='Wild.TButton', command=self.mergePopup)
-        self.openFile.bind('<Return>', self.mergePopup)
+        merge_ttp = Tooltip(self.master, self.mergeButton,
+                            'Merge Text (Ctrl+M)')
+        self.mergeButton.bind('<Return>', self.mergePopup)
+        self.mergeButton.bind('<Enter>', lambda event,
+                              ttp=merge_ttp: ttp.enter())
+        self.mergeButton.bind('<Leave>', lambda event,
+                              ttp=merge_ttp: ttp.leave())
+        self.mergeButton.bind('<ButtonPress>', lambda event,
+                              ttp=merge_ttp: ttp.leave())
 
         # Clear File button
         self.clearContent = ttk.Button(
             self.buttonFrame, text='Clear Contents', style='Wild.TButton', command=self.clearAllContents)
+        clear_ttp = Tooltip(self.master, self.clearContent, 'Clear Contents')
         self.clearContent.bind('<Return>', self.clearAllContents)
+        self.clearContent.bind('<Enter>', lambda event,
+                               ttp=clear_ttp: ttp.enter())
+        self.clearContent.bind('<Leave>', lambda event,
+                               ttp=clear_ttp: ttp.leave())
+        self.clearContent.bind(
+            '<ButtonPress>', lambda event, ttp=clear_ttp: ttp.leave())
 
         # Reference frames
         self.statusFrame = ttk.Frame(self.master)
@@ -262,7 +283,7 @@ class ReFile(tk.Frame):
         self.statusLabel.pack(fill=tk.BOTH, expand=True)
 
         # Open file button
-        self.openFile.grid(row=0, column=0, padx=5, pady=5)
+        self.mergeButton.grid(row=0, column=0, padx=5, pady=5)
 
         # Clear files button
         self.clearContent.grid(row=0, column=1, padx=5, pady=5,
@@ -389,11 +410,39 @@ class ReFile(tk.Frame):
         self.oldTextBox.bind('<MouseWheel>', self.onMouseWheeling)
         self.newTextBox.bind('<MouseWheel>', self.onMouseWheeling)
 
+        # Create Tooltip object
+        old_text_ttp = Tooltip(self.master, self.oldTextBox,
+                               'Left Text Box', 650, (0, 10))
+        new_text_ttp = Tooltip(self.master, self.newTextBox,
+                               'Right Text Box', 650, (0, 10))
+
         # Bind functions when clicking text box
-        self.oldTextBox.bind('<Button-1>', lambda event,
-                             option='left': self.selectTextBox(option))
-        self.newTextBox.bind('<Button-1>', lambda event,
-                             option='right': self.selectTextBox(option))
+        self.oldTextBox.bind('<Button-1>', lambda event, option='left',
+                             ttp=old_text_ttp: self.selectTextBox(option, ttp))
+        self.newTextBox.bind('<Button-1>', lambda event, option='right',
+                             ttp=new_text_ttp: self.selectTextBox(option, ttp))
+
+        # Bind function when hovering or leaving text box
+        self.oldTextBox.bind('<Enter>', lambda event,
+                             ttp=old_text_ttp: ttp.enter())
+        self.newTextBox.bind('<Enter>', lambda event,
+                             ttp=new_text_ttp: ttp.enter())
+        self.oldTextBox.bind('<Leave>', lambda event,
+                             ttp=old_text_ttp: ttp.leave())
+        self.newTextBox.bind('<Leave>', lambda event,
+                             ttp=new_text_ttp: ttp.leave())
+        self.oldTextBox.bind('<Button-2>', lambda event,
+                             ttp=old_text_ttp: ttp.leave())
+        self.oldTextBox.bind('<Button-3>', lambda event,
+                             ttp=old_text_ttp: ttp.leave())
+        self.newTextBox.bind('<Button-2>', lambda event,
+                             ttp=new_text_ttp: ttp.leave())
+        self.newTextBox.bind('<Button-3>', lambda event,
+                             ttp=new_text_ttp: ttp.leave())
+
+        # Bind functions when dragging text box
+        self.oldTextBox.bind('<B1-Motion>', self.onTextBoxDragging)
+        self.newTextBox.bind('<B1-Motion>', self.onTextBoxDragging)
 
     # Pack both text boxes and vertical scrollbar
     def renderTextBoxes(self):
@@ -542,7 +591,7 @@ class ReFile(tk.Frame):
         self.paragraphMarkText.pack(padx=(3, 0), side=tk.LEFT)
 
     # Text box selection
-    def selectTextBox(self, option):
+    def selectTextBox(self, option, ttp=None):
         if option == 'left' and self.selectedTextBox != 'old':
             self.selectedTextBox = 'old'
             self.leftRadioButton.config(image=self.checkedRadioImg)
@@ -555,6 +604,10 @@ class ReFile(tk.Frame):
             self.statusLabel['text'] = 'Right text box selected.'
         self.highlightFile(
             self.fileTextBox[self.selectedTextBox][1], self.fileTextBox[self.selectedTextBox][0], False)
+        self.drag_x = self.master.winfo_pointerx()
+        self.drag_y = self.master.winfo_pointery()
+        if ttp:
+            ttp.leave()
 
     # Underline insertion
     def underlineInsertion(self, event=None):
@@ -640,7 +693,6 @@ class ReFile(tk.Frame):
 
     # Mouse wheel event for vertical scrolling
     def onMouseWheeling(self, event):
-        print(event)
         self.oldTextBox.yview_scroll(-1*(event.delta//120), tk.UNITS)
         self.newTextBox.yview_scroll(-1*(event.delta//120), tk.UNITS)
         return 'break'
@@ -649,6 +701,13 @@ class ReFile(tk.Frame):
     def onContentHorizontalScrolling(self, *args):
         self.oldTextBox.xview(*args)
         self.newTextBox.xview(*args)
+
+    # Move the horizontal or vertical views of both text boxs at the same time when dragging text box
+    def onTextBoxDragging(self, event):
+        control_xview, control_yview = (
+            event.widget.xview(), event.widget.yview())
+        self.onContentHorizontalScrolling('moveto', control_xview[0])
+        self.onContentVerticalScrolling('moveto', control_yview[0])
 
     # Word wrapping
     def wordWrap(self):
@@ -749,27 +808,33 @@ class ReFile(tk.Frame):
                     0, 5), side=tk.BOTTOM, fill=tk.X)
 
     # Enter event for files
-    def onEntering(self, event):
+    def onEntering(self, event, ttp=None):
         colour = self.fileHoverColour if event.widget.cget(
             'state') != 'DISABLED' else self.fileHoverHightlightColour
         event.widget.config(background=colour)
         for child in event.widget.winfo_children():
             child.config(background=colour)
+        if ttp:
+            ttp.enter()
 
     # Leave event for files
-    def onLeaving(self, event):
+    def onLeaving(self, event, ttp=None):
         colour = self.fileBackgroundColour if event.widget.cget(
             'state') != 'DISABLED' else self.fileHighlightColour
         event.widget.config(background=colour)
         for child in event.widget.winfo_children():
             child.config(background=colour)
+        if ttp:
+            ttp.leave()
 
     # Mouse hold event for files
-    def onPressing(self, event, outLabel):
+    def onPressing(self, event, outLabel, ttp=None):
         if outLabel.cget('state') != 'DISABLED':
             outLabel.config(background=self.filePressColour)
             for child in outLabel.winfo_children():
                 child.config(background=self.filePressColour)
+        if ttp:
+            ttp.leave()
 
     # Mouse release event for highlighting a file when clicked
     def onReleasing(self, event, outLabel, filename):
@@ -900,7 +965,7 @@ class ReFile(tk.Frame):
         self.numHighlight()
 
     # Clear all contents
-    def clearAllContents(self):
+    def clearAllContents(self, event=None):
         self.oldTextBox.config(state=tk.NORMAL)
         self.newTextBox.config(state=tk.NORMAL)
         self.oldTextBox.delete(1.0, tk.END)
@@ -921,7 +986,7 @@ class ReFile(tk.Frame):
             "WM_DELETE_WINDOW", self.onMergeWindowDestroying)
         self.mergeWindow.bind('<Escape>', self.onMergeWindowDestroying)
 
-        self.openFile.state(['disabled'])
+        self.mergeButton.state(['disabled'])
         self.clearContent.state(['disabled'])
 
         mergeWidth = 680
@@ -1027,7 +1092,7 @@ class ReFile(tk.Frame):
     # Enable buttons from root when closing merge window
     def onMergeWindowDestroying(self, event=None):
         self.mergeWindow.destroy()
-        self.openFile.state(['!disabled'])
+        self.mergeButton.state(['!disabled'])
         self.clearContent.state(['!disabled'])
 
     # Modify both text boxes
@@ -1087,21 +1152,34 @@ class ReFile(tk.Frame):
                 if info[0] == docFile:
                     info[1] = label
 
+            doc_type = ''
+            if docFile.lower().endswith(('.doc', '.docx')):
+                doc_type = self.docType['.docx']
+            elif docFile.lower().endswith('.pdf'):
+                doc_type = self.docType['.pdf']
+            else:
+                doc_type = self.docType['.txt']
+
+            tooltip = Tooltip(self.master, label, '{}\nType: {}\nPath: {}'.format(
+                os.path.basename(docFile), doc_type, docFile))
+
             # Bind label to onEntering
-            label.bind('<Enter>', self.onEntering)
+            label.bind('<Enter>', lambda event,
+                       ttp=tooltip: self.onEntering(event, ttp))
             label.bind('<FocusIn>', self.onEntering)
 
             # Bind label to onLeaving
-            label.bind('<Leave>', self.onLeaving)
+            label.bind('<Leave>', lambda event,
+                       ttp=tooltip: self.onLeaving(event, ttp))
             label.bind('<FocusOut>', self.onLeaving)
 
             # Bind label, imageCanvas and textLabel to onPressing
-            label.bind('<ButtonPress-1>', lambda event,
-                       outLabel=label: self.onPressing(event, outLabel))
-            imageCanvas.bind('<ButtonPress-1>', lambda event,
-                             outLabel=label: self.onPressing(event, outLabel))
-            textLabel.bind('<ButtonPress-1>', lambda event,
-                           outLabel=label: self.onPressing(event, outLabel))
+            label.bind('<ButtonPress-1>', lambda event, outLabel=label,
+                       ttp=tooltip: self.onPressing(event, outLabel, ttp))
+            imageCanvas.bind('<ButtonPress-1>', lambda event, outLabel=label,
+                             ttp=tooltip: self.onPressing(event, outLabel, ttp))
+            textLabel.bind('<ButtonPress-1>', lambda event, outLabel=label,
+                           ttp=tooltip: self.onPressing(event, outLabel, ttp))
 
             # Bind label, imageCanvas and textLabel to onReleasing
             label.bind('<ButtonRelease-1>', lambda event, outLabel=label,
@@ -1187,7 +1265,7 @@ class ReFile(tk.Frame):
                         self.fileListFrame.config(width=1)
 
     def addFile(self, event=None):
-        self.openFile.state(['disabled'])
+        self.mergeButton.state(['disabled'])
         self.clearContent.state(['disabled'])
         self.statusLabel['text'] = 'Selecting files'
         files = filedialog.askopenfilenames(initialdir='/', title='Select File',
@@ -1211,7 +1289,7 @@ class ReFile(tk.Frame):
             widget.destroy()
 
         self.fileLabelList.clear()
-        self.openFile.state(['!disabled'])
+        self.mergeButton.state(['!disabled'])
         self.clearContent.state(['!disabled'])
         self.statusLabel['text'] = 'Complete!'
         self.displayFiles()
