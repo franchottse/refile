@@ -706,8 +706,8 @@ class ReFile(tk.Frame):
     def onTextBoxDragging(self, event):
         control_xview, control_yview = (
             event.widget.xview(), event.widget.yview())
-        self.onContentHorizontalScrolling('moveto', control_xview[0])
-        self.onContentVerticalScrolling('moveto', control_yview[0])
+        self.onContentHorizontalScrolling(tk.MOVETO, control_xview[0])
+        self.onContentVerticalScrolling(tk.MOVETO, control_yview[0])
 
     # Word wrapping
     def wordWrap(self):
