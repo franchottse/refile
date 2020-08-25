@@ -11,7 +11,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from win32com.client import Dispatch
 
-# This code is mainly for reading and outputing files
+# This code is mainly for reading and outputing files only
 
 
 # Read file
@@ -152,7 +152,7 @@ def exportFile(output, underlineOnOff, strikethroughOnOff, highlightOnOff):
 
         # Register a font
         pdfmetrics.registerFont(
-            TTFont('Noto Sans HK', './NotoSansHK-Regular.ttf'))
+            TTFont('Noto Sans HK', './font/NotoSansHK-Regular.ttf'))
 
         # Create a style
         style = ParagraphStyle(

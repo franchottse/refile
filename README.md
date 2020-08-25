@@ -11,6 +11,7 @@ A basic text file reader to show contents and see differences with Tkinter GUI.
 -   [Motivation](#motivation)
 -   [Feature](#feature)
 -   [Objectives](#objectives)
+-   [How To Use](#how-to-use)
 -   [Installation](#installation)
 -   [Task List](#task-list)
     -   [GUI](#gui)
@@ -24,7 +25,7 @@ A basic text file reader to show contents and see differences with Tkinter GUI.
 
 ## Motivation
 
-The reason for creating this Python app is for my friends, they work at a company which involves lots of text files, and they hope they could have something app to compare and output the differences. For example, the words "Hello World" and "Hi World" will output as "Hi Hello World" and highlight "Hi" and "Hello" to tell the difference.
+The reason for creating this Python app is for my friends, they work at a company which involves lots of text files, and they hope they could have something app to compare and output the differences. For example, the words **"Hello World"** and **"Hi World"** will output as "**H<del style="background-color: #FFAAAA">ello</del><ins style="background-color: #AAFFAA">i</ins> World**" and highlight the difference.
 
 <!-- FEATURE -->
 
@@ -38,7 +39,7 @@ With the following features:
 -   Users can view different files by selecting files 🙎‍♂️🙎‍♀️🗃
 -   Users can enable/disable differences from two selected files 🙎‍♂️🙎‍♀️📋
 
-<!-- '![example-app](example-app.gif)' need removing the quotes -->
+![example-app](example-app.gif "ReFile example")
 
 <!-- OBJECTIVES -->
 
@@ -62,7 +63,23 @@ With the following features:
 
 ## Installation
 
-The repo contains two executable files, one is installable, another one is of .EXE. You can download either one to use this app.
+The repo contains two executable files, one is an installer, another one is of .EXE. You can download either one to use this app.
+
+<!-- HOW TO USE -->
+
+<a name="how-to-use" />
+
+## How To Use
+
+-   **Select File**: press `Ctrl+O` or Double click in file field
+-   **Delete all file in file field**: `Ctrl+D`
+-   **Merge Text**: press `Ctrl+M`
+-   **Change Text Box**: Click the `Options` on the left or the text box itself
+-   **Open File**: press `Ctrl+Enter` when focusing a file or use right click menu
+-   **Copy Text**: press `Ctrl+C` when focusing a file or use right click menu
+-   **Copy Path**: press `Shift+Alt+C` when focusing a file or use right click menu
+-   **Copy Relative Path**: press `Ctrl+Shift+C` when focusing a file or use right click menu
+-   **Delete a File**: press `Del` when focusing a file or use right click menu
 
 <!-- TASK LIST -->
 
@@ -148,14 +165,14 @@ The repo contains two executable files, one is installable, another one is of .E
 -   [x] Bind function to "Save Output" for saving output text
 -   [x] Bind functions to deleting one or all files
 -   [x] Bind functions to all menu options
--   [x] Save settings when closing app
+-   [x] Save file names and settings when closing app
 
 <a name="convertion" />
 
 ### Convertion
 
--   [ ] Convert whole app into one installable file
--   [ ] Convert whole app into a .EXE file
+-   [x] Convert whole app into one installable file
+-   [ ] Convert whole app into a standalone .EXE file
 
 <!-- LICENSE -->
 
@@ -165,7 +182,7 @@ The repo contains two executable files, one is installable, another one is of .E
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
-MIT © [Frankie Tse]()
+MIT © [Frankie Tse](https://github.com/franchottse)
 
 <!-- ATTRIBUTION -->
 
@@ -176,7 +193,6 @@ MIT © [Frankie Tse]()
 -   "[Docs, google, word icon](https://www.iconfinder.com/icons/97957/docs_google_word_icon)" by [Dakirby309](https://www.deviantart.com/dakirby309), used under [CC BY](https://creativecommons.org/licenses/by-nc/3.0/) / Resized from original
 -   "[Documents icon](https://www.iconfinder.com/icons/99038/documents_icon)" by [Dakirby309](https://www.deviantart.com/dakirby309)
 -   "[Acrobat, adobe, reader icon](https://www.iconfinder.com/icons/99074/acrobat_adobe_reader_icon)" by [Dakirby309](https://www.deviantart.com/dakirby309)
--   "[Button PNG](http://pngimg.com/download/31565)" by [pngimg.com](http://pngimg.com/), used under [CC BY](https://creativecommons.org/licenses/by-nc/4.0/) / Resized from original
 -   [Toggle On icon](https://icons8.com/icons/set/toggle-on) icon by [Icons8](https://icons8.com)
 -   [Toggle Off icon](https://icons8.com/icons/set/toggle-off) icon by [Icons8](https://icons8.com)
 -   [Unchecked Radio Button icon](https://icons8.com/icons/set/unchecked-radio-button) icon by [Icons8](https://icons8.com)

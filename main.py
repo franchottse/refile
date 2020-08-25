@@ -15,7 +15,7 @@ class ReFile(tk.Frame):
         self.docFiles = []
         self.master = master
         super().__init__()
-        # tk.Frame.__init__(self, self.master)
+
         # Bind the main keys
         self.master.bind('<Delete>', self.deleteFile)
         self.master.bind('<Control-o>', self.addFile)
@@ -28,13 +28,11 @@ class ReFile(tk.Frame):
         self.xPosition = (self.master.winfo_screenwidth()//2)-(self.width//2)
         self.yPosition = (self.master.winfo_screenheight()//2)-(self.height//2)
         self.style = ttk.Style(self.master)
-        # self.style.theme_use('clam')
         self.fileHighlightColour = '#B5ACA8'
         self.fileHoverColour = 'orange'
         self.fileHoverHightlightColour = 'grey'
         self.filePressColour = '#ED5903'
         self.fileBackgroundColour = 'white'
-        # self.fileBackgroundColour = '#EBD987'
         self.labelColour = 'white'
         self.style.configure('TFrame', background="#B5ACA8", padding=5)
         self.style.configure('Wild.TButton', background='white',
@@ -113,42 +111,40 @@ class ReFile(tk.Frame):
         if os.path.isfile('settings.txt'):
             self.wordWrap()
 
-    # TODO: Beautify the layout of the GUI
     def configureGUI(self):
         # App title & configuration
         self.master.winfo_toplevel().title('ReFile')
-        self.master.iconbitmap('./refile-icon.ico')
-        # colours = skyblue, #B7E7B0, #93E9BE, #FFEAAA <- recommend
+        self.master.iconbitmap('./img/refile-icon.ico')
         self.master.configure(bg='#FFEAAA')
         self.master.minsize(690, 690)
 
-        # Attribution guide: https://wiki.creativecommons.org/wiki/Best_practices_for_attribution#This_is_a_good_attribution_for_material_you_modified_slightly
-
         # Word file icon
         self.wordIcon = ImageTk.PhotoImage(Image.open(
-            './word.png').resize((100, 100), Image.ANTIALIAS))
+            './img/word.png').resize((100, 100), Image.ANTIALIAS))
 
         # Document file icon
         self.textIcon = ImageTk.PhotoImage(Image.open(
-            './text.png').resize((100, 100), Image.ANTIALIAS))
+            './img/text.png').resize((100, 100), Image.ANTIALIAS))
 
         # PDF file icon
         self.pdfIcon = ImageTk.PhotoImage(Image.open(
-            './pdf.png').resize((100, 100), Image.ANTIALIAS))
+            './img/pdf.png').resize((100, 100), Image.ANTIALIAS))
 
         # Unchecked radio button image
-        self.uncheckedRadioImg = ImageTk.PhotoImage(
-            Image.open('./unchecked-radio-button.png').resize((24, 24), Image.ANTIALIAS))
+        self.uncheckedRadioImg = ImageTk.PhotoImage(Image.open(
+            './img/unchecked-radio-button.png').resize((24, 24), Image.ANTIALIAS))
 
         # Checked radio button image
-        self.checkedRadioImg = ImageTk.PhotoImage(
-            Image.open('./checked-radio-button.png').resize((24, 24), Image.ANTIALIAS))
+        self.checkedRadioImg = ImageTk.PhotoImage(Image.open(
+            './img/checked-radio-button.png').resize((24, 24), Image.ANTIALIAS))
 
         # Toggle off button image
-        self.toggleOffImg = ImageTk.PhotoImage(Image.open('./toggle-off.png'))
+        self.toggleOffImg = ImageTk.PhotoImage(
+            Image.open('./img/toggle-off.png'))
 
         # Toggle on button image
-        self.toggleOnImg = ImageTk.PhotoImage(Image.open('./toggle-on.png'))
+        self.toggleOnImg = ImageTk.PhotoImage(
+            Image.open('./img/toggle-on.png'))
 
         # Configure grids
         tk.Grid.rowconfigure(self.master, 0, weight=1)
@@ -198,7 +194,6 @@ class ReFile(tk.Frame):
         self.createOptions()
 
         # Button configuration
-        # buttonStyle = {'padx': '10', 'pady': '5', 'fg': 'black', 'bg': 'white', 'activebackground': '#F5E7D7', 'activeforeground': 'black', 'bd': '2'}
         self.buttonFrame = tk.Frame(self.master, bg='#FFEAAA')
 
         # Select File button
@@ -335,9 +330,6 @@ class ReFile(tk.Frame):
         self.helpMenu.add_separator()
         self.helpMenu.add_command(
             label='About ReFile', command=self.aboutMessage)
-
-        # Create right click menu for files
-        # self.createRightClickMenu()
 
     # Right click menu for files
     def createRightClickMenu(self, event, filename, outLabel):
@@ -770,8 +762,7 @@ class ReFile(tk.Frame):
         title = 'ReFile'
         message = 'If you want to know more information about how to use it, please press OK to open the GitHub repository.'
         if messagebox.askokcancel(title, message):
-            # TODO: Change the link
-            webbrowser.open('https://github.com/franchottse')
+            webbrowser.open('https://github.com/franchottse/refile')
 
     # Release not message
     def releaseNotesMessage(self):
@@ -897,7 +888,7 @@ class ReFile(tk.Frame):
     # File name wrapper
     def filenameWrapper(self, filename):
         # File name must be in full path
-        return os.path.basename(filename) if len(os.path.basename(filename)) < 21 else os.path.basename(filename)[:20]+'...'
+        return os.path.basename(filename) if len(os.path.basename(filename)) < 18 else os.path.basename(filename)[:17]+'...'
 
     def isFile(self):
         if os.path.isfile('docList.txt'):
@@ -999,7 +990,7 @@ class ReFile(tk.Frame):
             self.mergeWindow.winfo_screenwidth()//2)-(mergeWidth//2)
         yMergePosition = (
             self.mergeWindow.winfo_screenheight()//2)-(mergeHeight//2)
-        self.mergeWindow.iconbitmap('./refile-icon.ico')
+        self.mergeWindow.iconbitmap('./img/refile-icon.ico')
         self.mergeWindow.geometry(
             '{}x{}+{}+{}'.format(mergeWidth, mergeHeight, xMergePosition, yMergePosition))
         self.mergeWindow.configure(bg='#FFEAAA')
@@ -1279,12 +1270,6 @@ class ReFile(tk.Frame):
             if file not in self.docFiles and file != '':
                 self.docFiles.append(file)
                 print('New file: ' + file)
-            '''elif file in self.docFiles:
-                self.statusLabel['text'] = 'There is at least a file added before.'
-                messagebox.showinfo(
-                    'ReFile', 'There is at least a file added before.')
-                self.addFile()
-                break'''
         for widget in self.fileListFrame.winfo_children():
             widget.destroy()
 

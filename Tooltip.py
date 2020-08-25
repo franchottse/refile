@@ -30,14 +30,18 @@ class Tooltip:
     # Set window properties
     def tip_window(self):
         window = tk.Toplevel(self.root)
+
         # Hide the window title or status bar, etc.
         window.overrideredirect(True)
+
         # Keep the window on top
         window.attributes('-toolwindow', 1)
+
         # Make sure the tooltip will be created under the cursor after the timeout
         x = self.root.winfo_pointerx() + self.offset[0]
         y = self.root.winfo_pointery() + self.offset[1]
         window.wm_geometry('+%d+%d' % (x, y))
+
         return window
 
     # Create window
@@ -51,6 +55,7 @@ class Tooltip:
             'borderwidth': 1,
             'anchor': tk.CENTER
         }
+
         self.tipwindow = self.tip_window()
         label = ttk.Label(self.tipwindow, **kwargs)
         label.grid(ipadx=3, ipady=3, sticky=tk.N+tk.S+tk.E+tk.W)
