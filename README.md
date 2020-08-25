@@ -55,7 +55,7 @@ With the following features:
 -   [ ] 🙈 Show/Hide text difference
 -   [ ] 📋 Show a pop-up window for output data
 -   [ ] 💾 Save the output data to new Word or PDF files
--   [ ] 🚀 Convert the whole app into an installable or a .EXE file
+-   [ ] 🚀 Convert the whole app into an installable and a standalone .EXE file
 
 <!-- INSTALLATION -->
 
