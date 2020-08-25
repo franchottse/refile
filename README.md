@@ -54,7 +54,7 @@ With the following features:
 -   [ ] 🗃 Save the added files for the next time use
 -   [ ] 🙈 Show/Hide text difference
 -   [ ] 📋 Show a pop-up window for output data
--   [ ] 💾 Save the output data to new Word, PDF ~~or text~~ files
+-   [ ] 💾 Save the output data to new Word or PDF files
 -   [ ] 🚀 Convert the whole app into an installable or a .EXE file
 
 <!-- INSTALLATION -->
