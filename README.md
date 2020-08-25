@@ -63,7 +63,7 @@ With the following features:
 
 ## Installation
 
-The repo contains two executable files, one is an installer, another one is of .EXE. You can download either one to use this app.
+The repo contains an executable file, which is an installer. A standalone .EXE file may be added later on so that you can download either one to use this app.
 
 <!-- HOW TO USE -->
 
