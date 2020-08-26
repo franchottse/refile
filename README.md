@@ -75,11 +75,11 @@ The repo contains an executable file, which is an installer. A standalone .EXE f
 -   **Delete all file in file field**: `Ctrl+D`
 -   **Merge Text**: press `Ctrl+M`
 -   **Change Text Box**: Click the `Options` on the left or the text box itself
--   **Open File**: press `Ctrl+Enter` when focusing a file or use right click menu
--   **Copy Text**: press `Ctrl+C` when focusing a file or use right click menu
--   **Copy Path**: press `Shift+Alt+C` when focusing a file or use right click menu
--   **Copy Relative Path**: press `Ctrl+Shift+C` when focusing a file or use right click menu
--   **Delete a File**: press `Del` when focusing a file or use right click menu
+-   **Open File**: press `Ctrl+Enter` when focusing on a file or use right click menu
+-   **Copy Text**: press `Ctrl+C` when focusing on a file or use right click menu
+-   **Copy Path**: press `Shift+Alt+C` when focusing on a file or use right click menu
+-   **Copy Relative Path**: press `Ctrl+Shift+C` when focusing on a file or use right click menu
+-   **Delete a File**: press `Del` when focusing on a file or use right click menu
 
 <!-- TASK LIST -->
 
