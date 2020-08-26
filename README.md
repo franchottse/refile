@@ -1,6 +1,6 @@
 <!-- PROJECT TITLE -->
 
-# ReFile - Excel file reader
+# ReFile - Text file reader
 
 A basic text file reader to show contents and see differences with Tkinter GUI.
 
